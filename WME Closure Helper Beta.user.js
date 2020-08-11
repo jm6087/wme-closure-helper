@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      1.0.0-beta.4
+// @version      1.0.0-beta.5
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -69,7 +69,7 @@ var G_AMOUNTOFPRESETS = 100;
             '<li><a data-toggle="tab" href="#wmech-tab-format">Formatting</a></li>' +
             '<li><a data-toggle="tab" href="#wmech-tab-about">About</a></li>' +
             '</ul>';
-        var settingsString = '<div class="tab-pane" id="wmech-tab-settings"><h2><center>Settings</center></h2><div id="wmech-main-settings"><div id="wmech-settings-boxes">Kinda lonely here right now... :(</div></div><div id="wmech-quicksearch-settings"></div></div>';
+        var settingsString = '<div class="tab-pane" id="wmech-tab-settings"><h2><center>Settings</center></h2><div id="wmech-main-settings"><div id="wmech-settings-boxes"></div></div><div id="wmech-quicksearch-settings"></div></div>';
         var formatString = '<div class="tab-pane" id="wmech-tab-format">' +
             '<h2><center>Formatting</center></h2>' +
             '<h3>Formatting Time Strings</h3>' +
@@ -84,7 +84,7 @@ var G_AMOUNTOFPRESETS = 100;
             '<ul><li>"D: 2024-09-30 06:00" = Sets the closure until 2024-09-30 at 6:00AM.</li><li>"D: 2020-07-08 14:15" = Sets closure until 2020-07-08 at 14:15.</li></ul></li>' +
             '</ul>' +
             '<h3>Duration Strings</h3>' +
-            '<ul><li>"m" = Minute</li><li>"h" = Hour</li><li>"d" = Day</li><li>"o" = Month</li><li>"y" = Year</li><li><b>Note: </b> Weeks and other date/times are not supported</li><li>Combine durations with no spaces to form one string</li></ul>' +
+            '<ul><li>"m" = Minute</li><li>"h" = Hour</li><li>"d" = Day</li><li>"o" = Month</li><li>"y" = Year</li><li><b>Note: </b> Weeks and other date/times are not supported</li></ul>' +
             '<h3>Name String</h3>' +
             '<ul>' +
             '<li><b>{{reason}}</b> = The reason associated with the closure</li>' +
@@ -119,11 +119,12 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addSettingsBoxes() {
-        // Gee... kinda lonely right now :(
+        addSettingsCheckbox("Set segment list on closures to default collapsed", "wmech_settingseglistcollapse");
+        addSettingsCheckbox("Direction click-saver buttons do not use directional cursors", "wmech_settingdircsdircur");
     }
 
     function addSettingsCheckbox(text, id) {
-        $("#wmech-settings-boxes").append("<div class='controls-container'><input class='wmech_checkbox' id='" + id + "' type='checkbox'><label class='wmechSettingsLabel' for='" + id + "'>" + text + "</label></div><br>");
+        $("#wmech-settings-boxes").append("<div class='controls-container'><input class='wmech_checkbox wmech_settingscheckbox' id='" + id + "' type='checkbox'><label class='wmechSettingsLabel' for='" + id + "'>" + text + "</label></div><br>");
     }
 
     function initializeSettings() {
@@ -177,6 +178,17 @@ var G_AMOUNTOFPRESETS = 100;
             settings.presets[parseInt(presetIndex - 1)][prop] = $(this).val();
             saveSettings();
         });
+        $(".wmech_settingscheckbox").change(function() {
+            var id = $(this)[0].id;
+            var harvestIdInfoRE = new RegExp(/wmech_setting(.*)/);
+            var harvestIdInfo = id.match(harvestIdInfoRE);
+            var settingName = harvestIdInfo[1];
+            if (!settings.settingsCheckboxes) {
+                settings.settingsCheckboxes = {};
+            }
+            settings.settingsCheckboxes[settingName] = $(this).is(":checked");
+            saveSettings();
+        });
 
         setTimeout(loadSettings, 2500);
         log("Settings initialized.");
@@ -195,7 +207,7 @@ var G_AMOUNTOFPRESETS = 100;
         log("Attempting to save to the WazeDev server.");
         var res = await WazeWrap.Remote.SaveSettings(GM_info.script.name, settings);
         if (res == false) {
-            error("WMECH: Error saving settings to the WazeDev server.");
+            error("Error saving settings to the WazeDev server.");
         } else if (res == null) {
             log("Tried to save settings to WazeDev server, but you don't have a PIN set.")
         } else {
@@ -251,6 +263,14 @@ var G_AMOUNTOFPRESETS = 100;
                     } else {
                         $("#wmech_preset" + (i + 1) + key).val(preset[key]);
                     }
+                }
+            }
+        }
+        if (settings.settingsCheckboxes) { 
+            var settingsCBs = settings.settingsCheckboxes;
+            for (var key in settingsCBs) {
+                if (settingsCBs[key]) {
+                    $("#wmech_setting" + key).attr("checked", "checked");
                 }
             }
         }
@@ -342,7 +362,7 @@ var G_AMOUNTOFPRESETS = 100;
             var color = $(".wmech_colorinput").eq(presetCount - 1).val();
             var textColor = getTextContrastColor(color);
             if (nameInput) {
-                console.log("trying to actually add button " + presetCount);
+                //console.log("trying to actually add button " + presetCount);
                 $("#segment-edit-closures").append(
                     $('<button>', {
                         id: ('wmechButton' + presetCount),
@@ -367,17 +387,18 @@ var G_AMOUNTOFPRESETS = 100;
     function formatClosureList() {
         $(".details").css("padding", "0 25px 0 15px");
         $(".direction .dir-label").css("margin", "0").css("padding", "0");
-        $(".closures-list .direction").css("line-height", "15px").css("height", "20px");
+        $(".closures-list .direction").css("line-height", "15px").css("height", "20px").css("margin-left", "6px");
         $(".closure-item").css("margin-bottom", "5px").css("padding", "0");
         $(".section").css("padding", "0");
-        $(".dates").css("margin-left: 10px");
+        $(".dates").css("margin-left", "10px");
         $(".closure-title").css("padding", "0");
+        $(".buttons").css("top", "0px");
     }
 
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
         makeBulkButtons();
         $("li.closure-item").css("display", "flex").css("margin-bottom", "5px");
-        $("li.closure-item").wrapInner("<div style='margin-left: 4px;'></div>");
+        $("li.closure-item").wrapInner("<div style='margin-left: 4px; width: 90%;'></div>");
         var $checkboxDiv = $("<div />");
         var $checkbox = $("<input />", { type: "checkbox", "class": "wmech_bulkCheckbox" }).css("height", "100%").css("margin-top", "0");
         $checkboxDiv.css("vertical-align", "middle").css("position", "relative").css("margin-left", "4px");
@@ -621,7 +642,8 @@ var G_AMOUNTOFPRESETS = 100;
             var seg = res1.segments[i];
             var pID = seg.attributes.primaryStreetID;
             var pS = W.model.streets.getObjectById(pID);
-            finalRes.push(pS.name);
+            var name = pS.name;
+            finalRes.push((name == null ? "No Name" : name));
         }
         return combineStreets(finalRes);
     }
@@ -655,16 +677,23 @@ var G_AMOUNTOFPRESETS = 100;
         var numOfSegs = numOfSegsSelected();
         var segLabel = numOfSegs + " segs (" + segsLength + ")";
         $(".edit-closure form").prepend('<div class="form-group">' +
+            '<span><i class="fa fa-fw fa-chevron-down wmech_seglistchevron"></i></span>' + 
             '<label id="wmech_seginfolabel" class="control-label" for="closure_reason" style="margin-bottom: 0;">Segments</label>' +
             '<label id="wmech_seginfolabel" class="control-label" style="font-weight: normal;">' + segLabel + '</label>' +
             '<div class="controls"><ul id="wmech_seginfonames">' + '</ul></div></div>');
-        $(".edit-closure form .form-group").first().click(function() {
-            $(".edit-closure form .form-group").first().find("ul").toggle();
-        });
+        $(".edit-closure form .form-group").first().click(collapseSegList);
+        if ($("#wmech_settingseglistcollapse").prop("checked")) {
+            collapseSegList();
+        }
         var streets = getAllStreets();
         for (var i = 0; i < streets.length; i++) {
             $("#wmech_seginfonames").append("<li>" + streets[i] + "</li>");
         }
+    }
+
+    function collapseSegList() {
+        $(".edit-closure form .form-group").first().find("ul").toggle();
+        $(".wmech_seglistchevron").toggleClass("fa-chevron-down fa-chevron-up");
     }
 
     function addClosureLengthValue() {
@@ -771,6 +800,13 @@ var G_AMOUNTOFPRESETS = 100;
     };
 
     function addDirectionCS() {
+        var segDir = -1;
+        for (var i = 0; i < 4; i++) {
+            if ($("input[value='" + i + "']").is(":checked")) {
+                segDir = i;
+            }
+        }
+        var directionalCursors = $("#wmech_settingdircsdircur").is(":checked");
         $("#closure_direction").parent().prev().after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
             "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
             "<div id='wmech_dBTW' class='wmech_closureButton wmech_dirbutton'>Two way (⇆)</div>");
@@ -778,20 +814,20 @@ var G_AMOUNTOFPRESETS = 100;
         if ($(".heading").length > 0 && numOfSegsSelected() <= 1) {
             if ($(".letter-circle:eq(0)").text() == "A") {
                 var dir = $(".heading:eq(0)").text().match(/(?<=Drive ).*(?= on)/)[0];
-                $(".wmech_dirbutton:eq(0)").append("(" + dir + ")").css("cursor", determineCursor(dir));
+                $(".wmech_dirbutton:eq(0)").append("(" + dir + ")").css("cursor", (directionalCursors ? "pointer" : determineCursor(dir)));
                 if (dir.length > 1) permDir = dir;
             } else {
                 var dir = $(".heading:eq(0)").text().match(/(?<=Drive ).*(?= on)/)[0];
-                $(".wmech_dirbutton:eq(1)").append("(" + dir + ")").css("cursor", determineCursor(dir));
+                $(".wmech_dirbutton:eq(1)").append("(" + dir + ")").css("cursor", (directionalCursors ? "pointer" : determineCursor(dir)));
                 if (dir.length > 1) permDir = dir;
             }
             if ($(".letter-circle:eq(2)").text() == "A") {
                 var dir = $(".heading:eq(1)").text().match(/(?<=Drive ).*(?= on)/)[0];
-                $(".wmech_dirbutton:eq(0)").append("(" + dir + ")").css("cursor", determineCursor(dir));
+                $(".wmech_dirbutton:eq(0)").append("(" + dir + ")").css("cursor", (directionalCursors ? "pointer" : determineCursor(dir)));
                 if (dir.length > 1) permDir = dir;
             } else if ($(".letter-circle:eq(2)").text() == "B") {
                 var dir = $(".heading:eq(1)").text().match(/(?<=Drive ).*(?= on)/)[0];
-                $(".wmech_dirbutton:eq(1)").append("(" + dir + ")").css("cursor", determineCursor(dir));
+                $(".wmech_dirbutton:eq(1)").append("(" + dir + ")").css("cursor", (directionalCursors ? "pointer" : determineCursor(dir)));
                 if (dir.length > 1) permDir = dir;
             }
         }
@@ -804,7 +840,14 @@ var G_AMOUNTOFPRESETS = 100;
         $("#wmech_dBTW").click(function() {
             $("#closure_direction").val("3").change();
         });
-        $("#wmech_dBTW").css("cursor", determineCursorDouble(permDir));
+        if (segDir == 1) {
+            // Segment direction is A --> B
+            $("#wmech_dBBA, #wmech_dBTW").remove();
+        } else if (segDir == 2) {
+            // Segment direction is B --> A
+            $("#wmech_dBAB, #wmech_dBTW").remove();
+        }
+        $("#wmech_dBTW").css("cursor", (directionalCursors ? "pointer" : determineCursorDouble(permDir)));
     }
 
     function determineCursor(dir) {
@@ -874,7 +917,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addNodeClosureButtons() {
-        console.log("Adding node closure buttons.");
+        //console.log("Adding node closure buttons.");
         $("label:contains('Closure nodes')").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
             "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
             "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
@@ -1017,7 +1060,8 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmech_presetsetting { margin-right: 10px; float: right; }",
             ".wmech_presetdropdown { height: 25px; } ",
             ".wmech_mtelabel { font-weight: normal; font-size: 14px; }",
-            ".wmech_mtelabelselected { font-weight: bold; }"
+            ".wmech_mtelabelselected { font-weight: bold; }",
+            ".wmech_seglistchevron { position: absolute; cursor: pointer; font-size: 14px; float: right; width: 100%; text-align: right; margin: 5px 5px 0 0; }"
         ].join('\n\n'));
     }
 
@@ -1165,7 +1209,7 @@ var G_AMOUNTOFPRESETS = 100;
                 if (durationString.match(/^[M|T|W|F|S]/) == null) {
                     var loopLength = durationString.match(/[a-z]/g).length;
                     //alert(newDate);
-                    console.log(loopLength);
+                    //console.log(loopLength);
                     for (var i = 0; i < loopLength; i++) {
                         var nextNum = durationString.match(/[^(y|o|d|h|m)]*/)[0];
                         var nextLetter = durationString.match(/[a-z]/g)[0];
@@ -1290,7 +1334,7 @@ var G_AMOUNTOFPRESETS = 100;
         } else {
             var newDate = new Date();
             var loopLength = rule.match(/[a-z]/g).length;
-            console.log(loopLength);
+            //console.log(loopLength);
             for (var i = 0; i < loopLength; i++) {
                 var nextNum = rule.match(/[^(y|o|d|h|m)]*/)[0];
                 var nextLetter = rule.match(/[a-z]/g)[0];
@@ -1313,7 +1357,7 @@ var G_AMOUNTOFPRESETS = 100;
                 }
                 rule = rule.replace(rule.substring(0, (nextNum + nextLetter).length), "");
             }
-            console.log(newDate);
+            //console.log(newDate);
             return [assembleYear([newDate.getFullYear(), newDate.getMonth() + 1, newDate.getDate()]), assembleTime([newDate.getHours(), newDate.getMinutes()])];
         }
     }
