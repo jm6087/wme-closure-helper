@@ -617,7 +617,7 @@ var G_AMOUNTOFPRESETS = 100;
     function getAllStreets() {
         var res1 = W.selectionManager.getSegmentSelection();
         var finalRes = [];
-        for (i = 0; i < res1.segments.length; i++) {
+        for (var i = 0; i < res1.segments.length; i++) {
             var seg = res1.segments[i];
             var pID = seg.attributes.primaryStreetID;
             var pS = W.model.streets.getObjectById(pID);
@@ -662,7 +662,7 @@ var G_AMOUNTOFPRESETS = 100;
             $(".edit-closure form .form-group").first().find("ul").toggle();
         });
         var streets = getAllStreets();
-        for (i = 0; i < streets.length; i++) {
+        for (var i = 0; i < streets.length; i++) {
             $("#wmech_seginfonames").append("<li>" + streets[i] + "</li>");
         }
     }
@@ -938,7 +938,7 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_eventId").removeAttr("required");
         $(".mte-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
         var to = $("#closure_eventId").children().length;
-        for (i = 0; i < to; i++) {
+        for (var i = 0; i < to; i++) {
             var labelText = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").text();
             var labelVal = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").val();
             $("#wmech_mteradiosform").append('<div><input id="testButton' + i + '" type="radio" name="wmech_mte" data-mte-val="' + labelVal + '"><label for="testButton' + i + '" class="wmech_mtelabel">' + labelText + '</label></div>');
@@ -1085,7 +1085,7 @@ var G_AMOUNTOFPRESETS = 100;
         });
         var re = new RegExp(match, "g");
         var matches = [];
-        for (i = 0; i < mtes.length; i++) {
+        for (var i = 0; i < mtes.length; i++) {
             if (mtes[i].name.match(re) != null) {
                 matches.push(mtes[i]);
             }
