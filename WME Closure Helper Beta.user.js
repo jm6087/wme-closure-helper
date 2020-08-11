@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      1.0.0-beta.2
+// @version      1.0.0-beta.3
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1218,9 +1218,9 @@ var G_AMOUNTOFPRESETS = 100;
                             break;
                     }
                     newDate.setDate(dOWNDate.getDate() + (dOWNum + 7 - dOWNDate.getDay()) % 7);
-                    alert(newDate);
+                    //alert(newDate);
                 }
-                alert(ruleHr + ruleMin);
+                //alert(ruleHr + ruleMin);
                 return [assembleYear([newDate.getFullYear(), newDate.getMonth() + 1, newDate.getDate()]), assembleTime([ruleHr, ruleMin])];
             } else if (count == 2) {
                 timeString = rule.substring(3, 8);
