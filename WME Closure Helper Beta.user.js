@@ -461,11 +461,7 @@ var G_AMOUNTOFPRESETS = 100;
         $checkboxDiv.append($checkbox);
         $("li.closure-item").prepend($checkboxDiv);
         $(":checkbox.wmech_bulkCheckbox").click(function(e) {
-            if ($(":checkbox.wmech_bulkCheckbox:checked").length == 0) {
-                hideBulkButtons();
-            } else {
-                showBulkButtons();
-            }
+            toggleBulkButtons();
             e.stopPropagation();
         });
 
@@ -473,10 +469,18 @@ var G_AMOUNTOFPRESETS = 100;
         var holderDiv = $("<div />", {id: "wmech_selectAllDiv"}).css("margin-bottom", "4px");
         holderDiv.append(
             $("<input />", {type: "checkbox", id: "wmech_selectAllCheckbox"}).click(function() {
-                $(".wmech_bulkCheckbox").click();
+                $(".wmech_bulkCheckbox").prop("checked", this.checked);
+                toggleBulkButtons();
             }));
         holderDiv.append($("<p />", {id: "wmech_selectAllText"}).text("Select all closures"));
         $(".full-closures").prepend(holderDiv);
+    }
+
+    function toggleBulkButtons(){
+        if ($(":checkbox.wmech_bulkCheckbox:checked").length == 0)
+            hideBulkButtons();
+        else
+            showBulkButtons();
     }
 
     function makeBulkButtons() {
@@ -493,9 +497,8 @@ var G_AMOUNTOFPRESETS = 100;
         $buttonDiv.hide();
         $("#wmech_bulkX").click(function() {
             hideBulkButtons();
-            $(".wmech_bulkCheckbox").each(function() {
-                this.checked = false;
-            });
+            $(".wmech_bulkCheckbox").prop("checked", false);
+            $('#wmech_selectAllCheckbox').prop("checked", false);
         });
         $("li.closure-item, .add-closure-button").click(function() {
             $("#wmech_bulkButtonDiv").remove();
