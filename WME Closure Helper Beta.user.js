@@ -447,7 +447,7 @@ var G_AMOUNTOFPRESETS = 100;
         $(".closure-item").css("margin-bottom", "5px").css("padding", "0");
         $(".section").css("padding", "0");
         $(".dates").css("margin-left", "10px");
-        $(".closure-title").css("padding", "0");
+        $(".closure-title").css("padding", "0").css("min-height","19px");
         $(".buttons").css("top", "0px");
     }
 
