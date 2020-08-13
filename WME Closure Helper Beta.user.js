@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      1.0.0-beta.5
+// @version      1.0.0-beta.6
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -44,24 +44,27 @@ var G_AMOUNTOFPRESETS = 100;
                 '<input id="wmech_preset' + preset + 'name" type="text" placeholder="Name" class="wmech_input wmech_inputpreset wmech_namepreset">' +
                 '<input id="wmech_preset' + preset + 'reason" type="text" placeholder="Description" class="wmech_input wmech_inputpreset">' +
                 '<input id="wmech_preset' + preset + 'timeString" type="text" placeholder="Time String" class="wmech_input wmech_inputpreset">' +
-                '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'permanent">Make permanent:</label><input class="wmech_checkbox wmech_presetcheckbox wmech_presetsetting" title="Enable permanent closures by default" id="wmech_preset' + preset + 'permanent" type="checkbox">' +
+                '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'permanent">Make permanent:</label>' + 
+                '<i class="waze-tooltip wmech_presetpermatooltip" data-original-title="This feature will check the HOV / Service Road adjacent checkbox, meaning the closure will not listen to traffic."></i>' +
+                '<input class="wmech_checkbox wmech_presetcheckbox wmech_presetsetting wmech_presetpermanent" title="Enable permanent closures by default" id="wmech_preset' + preset + 'permanent" type="checkbox">' +
                 '<br><label class="wmech_presetlabel" for="wmech_preset' + preset + 'nodes">Node closures:</label>' +
-                '<select class="wmech_presetsetting wmech_presetdropdown" id="wmech_preset' + preset + 'nodes">' +
+                '<select class="wmech_presetsetting wmech_presetdropdown wmech_presetnodes" id="wmech_preset' + preset + 'nodes">' +
                 '<option>None</option>' +
                 '<option>All</option>' +
                 '<option>Middle</option>' +
                 '<option>Ends</option>' +
                 '</select><br><label class="wmech_presetlabel" for="wmech_preset' + preset + 'direction">Direction:</label>' +
-                '<select class="wmech_presetsetting wmech_presetdropdown" id="wmech_preset' + preset + 'direction">' +
+                '<select class="wmech_presetsetting wmech_presetdropdown wmech_presetdirection" id="wmech_preset' + preset + 'direction">' +
                 '<option>Two Way</option>' +
                 '<option>A --> B</option>' +
                 '<option>B --> A</option>' +
                 '</select><div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteString">MTE Search:</label>' +
-                '<input style="width: 50%;" id="wmech_preset' + preset + 'mteString" type="text" placeholder="MTE Search" class="wmech_input wmech_inputpreset wmech_presetsetting"></div>' +
+                '<input style="width: 50%;" id="wmech_preset' + preset + 'mteString" type="text" placeholder="MTE Search" class="wmech_input wmech_inputpreset wmech_presetsetting wmech_presetmteString"></div>' +
                 '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteMatchIndex">MTE Regex Match #:</label>' +
-                '<input style="width: 20%;" id="wmech_preset' + preset + 'mteMatchIndex" type="text" placeholder="Match #" class="wmech_input wmech_inputpreset wmech_presetsetting">' +
+                '<input style="width: 20%;" id="wmech_preset' + preset + 'mteMatchIndex" type="text" placeholder="Match #" class="wmech_input wmech_inputpreset wmech_presetsetting wmech_presetmteMatchIndex">' +
                 '<div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'color">Color:</label>' +
                 '<input class="wmech_colorinput wmech_presetsetting wmech_presetcolor" type="color" id="wmech_preset' + preset + 'color"></div>' +
+                '<button class="wmech_closurebutton wmech_presetdeletebutton" style="background-color: red;">Delete Preset</button>' +
                 '</div>';
         }
         var tabString = '<ul class="nav nav-tabs"><li class="active"><a data-toggle="tab" href="#wmech-tab-presets">Presets</a></li>' +
@@ -97,7 +100,7 @@ var G_AMOUNTOFPRESETS = 100;
             '<ul>' +
             '<li>' + GM_info.script.version + '</li>' +
             '<li>Made by ' + GM_info.script.author + '</li>' +
-            '<li>Documentation: <a href="https://docs.google.com/document/d/1mPE8qKezU720VCgrVCKpury7fkW5y5FbDrXzYbBpQK4/edit?usp=sharing">Here</a>' +
+            '<li>Documentation: <a href="https://docs.google.com/document/d/1mPE8qKezU720VCgrVCKpury7fkW5y5FbDrXzYbBpQK4/edit?usp=sharing" target="_blank">Here</a>' +
             '<li>Thanks to all of you amazing editors who make the map better every day <3' +
             '</ul>' +
             '</div>';
@@ -105,7 +108,7 @@ var G_AMOUNTOFPRESETS = 100;
         $section.html(tabString + "<div class='tab-content'>" + formString + settingsString + formatString + aboutString + "</div>");
 
         setTimeout(function() {
-            new WazeWrap.Interface.Tab('WMECH', $section.html(), initializeSettings);
+            new WazeWrap.Interface.Tab('CH', $section.html(), initializeSettings);
             $(".wmech_presetdiv").hide();
             $("#wmech_presetrow1").show();
             $("#wmech_presetchooser").change(function() {
@@ -129,6 +132,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function initializeSettings() {
         addSettingsBoxes();
+        setUpDeletePresetButton();
 
         $(".wmech_inputpreset").change(function() {
             var id = $(this)[0].id;
@@ -140,7 +144,11 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.presets[parseInt(presetIndex - 1)] = {};
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = this.value;
-            saveSettings();
+        });
+        $(".wmech_namepreset").on('input', function() {
+            var curVal = $("#wmech_presetchooser").val();
+            $("#wmech_presetchooser").children().eq(curVal).text("Preset " + (parseInt(curVal) + 1) + " - " + $(this).val());
+            loadDropdown();
         });
         $(".wmech_presetcheckbox").change(function() {
             var id = $(this)[0].id;
@@ -152,7 +160,6 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.presets[parseInt(presetIndex - 1)] = {};
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = this.checked;
-            saveSettings();
         });
         $(".wmech_presetcolor").on("change", function() {
             var id = $(this)[0].id;
@@ -164,7 +171,6 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.presets[parseInt(presetIndex - 1)] = {};
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = this.value;
-            saveSettings();
         });
         $(".wmech_presetdropdown").change(function() {
             var id = $(this)[0].id;
@@ -176,7 +182,6 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.presets[parseInt(presetIndex - 1)] = {};
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = $(this).val();
-            saveSettings();
         });
         $(".wmech_settingscheckbox").change(function() {
             var id = $(this)[0].id;
@@ -187,11 +192,51 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.settingsCheckboxes = {};
             }
             settings.settingsCheckboxes[settingName] = $(this).is(":checked");
-            saveSettings();
         });
+        var settingsSaver = setInterval(function() {
+            saveSettings();
+            log("Save settings ran.");
+        }, 60000);
+
+        // Enable tooltips
+        $(".wmech_presetpermatooltip").tooltip();
 
         setTimeout(loadSettings, 2500);
         log("Settings initialized.");
+    }
+
+    function setUpDeletePresetButton() {
+        $(".wmech_presetdeletebutton").click(async function() {
+            // Find max preset value
+            var maxValue = 0;
+            $("#wmech_presetchooser").find("option").each(function() {
+                var curVal = $(this).val();
+                if (curVal > maxValue) {
+                    maxValue = curVal;
+                }
+            });
+
+            // Clear information about the current preset and the last preset
+            clearPreset($(this).parent());
+            var curId = $("#wmech_presetchooser").val();
+            $("#wmech_presetchooser").val(curId - 1).change();
+            settings.presets.splice(curId, 1);
+
+            await saveSettings();
+            clearPreset($("#wmech_presetrow" + maxValue));
+            if (curId == 0) {
+                $("#wmech_presetrow1").show();
+            }
+        });
+    }
+
+    function clearPreset(el) {
+        var preset = el;
+        preset.find(".wmech_inputpreset").val("").change();
+        preset.find(".wmech_presetpermanent").prop("checked", false).change();
+        preset.find(".wmech_presetnodes").val("None").change();
+        preset.find(".wmech_presetdirection").val("Two Way").change();
+        preset.find(".wmech_presetcolor").val("#000000").change();
     }
 
     async function saveSettings() {
@@ -200,7 +245,7 @@ var G_AMOUNTOFPRESETS = 100;
             localStorage.setItem("wmech_Settings", JSON.stringify(settings));
         }
         await saveToServer();
-        await loadSettings();
+        setTimeout(loadSettings, 100);
     }
 
     async function saveToServer() {
@@ -246,9 +291,15 @@ var G_AMOUNTOFPRESETS = 100;
         }
         
         // Set up presets
+        console.error("WMECH settings");
+        console.error(settings);
         var presets = settings.presets;
         for (var i = 0; i < presets.length; i++) {
             var preset = presets[i];
+            if (preset == null || preset.name == "") {
+                settings.presets.splice(i, 1);
+                saveSettings();
+            }
             for (var key in preset) {
                 if (preset.hasOwnProperty(key)) {
                     // If preset has value
@@ -268,9 +319,9 @@ var G_AMOUNTOFPRESETS = 100;
         }
         if (settings.settingsCheckboxes) { 
             var settingsCBs = settings.settingsCheckboxes;
-            for (var key in settingsCBs) {
-                if (settingsCBs[key]) {
-                    $("#wmech_setting" + key).attr("checked", "checked");
+            for (var cbKey in settingsCBs) {
+                if (settingsCBs[cbKey]) {
+                    $("#wmech_setting" + cbKey).attr("checked", "checked");
                 }
             }
         }
@@ -290,6 +341,12 @@ var G_AMOUNTOFPRESETS = 100;
                     text: "Preset " + (i + 1) + " - " + val
                 }));
                 newPresetIndex = i;
+            }
+            if ($("#wmech_presetchooser").children().length < 1) {
+                $("#wmech_presetchooser").append($('<option>', {
+                    value: 0,
+                    text: "Preset 1 - "
+                }));
             }
             if ($(this).is(":visible")) {
                 visibleIndex = i;
@@ -356,7 +413,6 @@ var G_AMOUNTOFPRESETS = 100;
         $("#segment-edit-closures").append("<div style='margin-top: 10px;'></div>");
         var presetCount = 1;
         for (presetCount = 1; presetCount < G_AMOUNTOFPRESETS; presetCount++) {
-            log("Attempting to add closure button" + presetCount + ".");
             var nameInput = $("#wmech_preset" + presetCount + "name").val();
             var timeInput = $("#wmech_preset" + presetCount + "timeString").val();
             var color = $(".wmech_colorinput").eq(presetCount - 1).val();
@@ -405,9 +461,22 @@ var G_AMOUNTOFPRESETS = 100;
         $checkboxDiv.append($checkbox);
         $("li.closure-item").prepend($checkboxDiv);
         $(":checkbox.wmech_bulkCheckbox").click(function(e) {
-            showBulkButtons();
+            if ($(":checkbox.wmech_bulkCheckbox:checked").length == 0) {
+                hideBulkButtons();
+            } else {
+                showBulkButtons();
+            }
             e.stopPropagation();
         });
+
+        // Add select all closures checkbox
+        var holderDiv = $("<div />", {id: "wmech_selectAllDiv"}).css("margin-bottom", "4px");
+        holderDiv.append(
+            $("<input />", {type: "checkbox", id: "wmech_selectAllCheckbox"}).click(function() {
+                $(".wmech_bulkCheckbox").click();
+            }));
+        holderDiv.append($("<p />", {id: "wmech_selectAllText"}).text("Select all closures"));
+        $(".full-closures").prepend(holderDiv);
     }
 
     function makeBulkButtons() {
@@ -478,7 +547,7 @@ var G_AMOUNTOFPRESETS = 100;
                 // Now, time to add a new closure!
                 $(".cancel-button").click();
                 $(".add-closure-button").click();
-                log("Clicked the button.")
+                log("Clicked the button.");
                 $("#closure_direction").val(dir).change();
                 $("#closure_reason").val(title).change();
                 $("#closure_startDate").val(startDate).change();
@@ -492,7 +561,14 @@ var G_AMOUNTOFPRESETS = 100;
                     $("#closure_permanent").attr("checked", "checked").change();
                 }
                 addToEndStartDate(0, 1, 0, "start");
-                $("#closure_eventId").val(mte).change();
+                if (mte == "") {
+                    $("#closure_eventId").val("").change();
+                    setTimeout(function() {
+                        $("#closure_eventId").removeAttr("value");
+                    }, 10);
+                } else {
+                    $("#closure_eventId").val(mte).change();
+                }
                 setTimeout(function() {
                     // Wait for default end date/time adjustment
                     $("#closure_endDate").val(endDate).change();
@@ -608,6 +684,17 @@ var G_AMOUNTOFPRESETS = 100;
         $("wz-menu-item.delete").on('click.wmech_bulk', function(e) {
             e.stopImmediatePropagation();
         });
+
+        // Override window.confirm
+        //var oldConfirm = window.confirm;
+        window.confirm = function(msg) {
+            log(msg);
+            if (msg.indexOf("Delete closure") != -1) {
+                return true;
+            } else {
+                return oldConfirm(msg);
+            }
+        };
         $("wz-menu-item.delete").each(function(i) {
             if (checked.includes(i)) {
                 $(this).click();
@@ -1000,7 +1087,7 @@ var G_AMOUNTOFPRESETS = 100;
             $("#closure_eventId").val("").change();
             setTimeout(function() {
                 $("#closure_eventId").removeAttr("value");
-            }, 10);
+            }, 100);
             $("input[data-mte-val='']").click();
         } else {
             $("input[data-mte-val='" + firstSelected + "']").click();
@@ -1061,7 +1148,11 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmech_presetdropdown { height: 25px; } ",
             ".wmech_mtelabel { font-weight: normal; font-size: 14px; }",
             ".wmech_mtelabelselected { font-weight: bold; }",
-            ".wmech_seglistchevron { position: absolute; cursor: pointer; font-size: 14px; float: right; width: 100%; text-align: right; margin: 5px 5px 0 0; }"
+            ".wmech_seglistchevron { position: absolute; cursor: pointer; font-size: 14px; float: right; width: 100%; text-align: right; margin: 5px 5px 0 0; }",
+            ".wmech_presetpermatooltip { margin-left: 10px; }",
+            "#wmech_selectAllCheckbox { margin-left: 4px; } ",
+            "#wmech_selectAllDiv { margin-bottom: 4px } ",
+            "#wmech_selectAllText { font-weight: bold; margin-left: 4px; display: inline }"
         ].join('\n\n'));
     }
 
@@ -1079,7 +1170,7 @@ var G_AMOUNTOFPRESETS = 100;
                 $("#closure_permanent").prop("checked", "checked").change();
             }, 50);
         }
-        var nodeClosuresOption = $("#wmechDropdown" + (ruleIndex + 1) + "Nodes").val();
+        var nodeClosuresOption = $("#wmech_preset" + (ruleIndex + 1) + "nodes").val();
         if (nodeClosuresOption == "None") { setTimeout(function() {
             toggleNoNodes(true);
         }, 50); }
@@ -1100,7 +1191,7 @@ var G_AMOUNTOFPRESETS = 100;
                 $("#segment-edit-closures > div.closures > div > div > form > div.checkbox.controls-container > label").css("color", "rgba(63, 188, 113, 1)"); 
             }
         }, 20);
-        var direction = $("#wmechDropdown" + (ruleIndex + 1) + "Direction").val();
+        var direction = $("#wmech_preset" + (ruleIndex + 1) + "direction").val();
         var dirNumber = 3;
         if (direction == "Two Way") {
             dirNumber = 3;
@@ -1109,7 +1200,7 @@ var G_AMOUNTOFPRESETS = 100;
         } else if (direction == "B --> A") {
             dirNumber = 2;
         }
-        $("#closure_direction").val(dirNumber);
+        $("#closure_direction").val(dirNumber).change();
         var mteRegEx = $("#wmech_preset" + (ruleIndex + 1) + "mteString").val();
         if (mteRegEx.length > 0) {
             var matchNum = $("#wmech_preset" + (ruleIndex + 1) + "mteMatchIndex").val();
@@ -1167,6 +1258,9 @@ var G_AMOUNTOFPRESETS = 100;
                 newType = "Road";
                 break;
             case "Local Street":
+                newType = "Street";
+                break;
+            case "Primary Street":
                 newType = "Street";
                 break;
             case "Freeway (Interstate / Other)":
