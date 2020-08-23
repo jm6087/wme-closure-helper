@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      1.0.0-beta.6
+// @version      1.0.0-beta.7
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -44,7 +44,7 @@ var G_AMOUNTOFPRESETS = 100;
                 '<input id="wmech_preset' + preset + 'name" type="text" placeholder="Name" class="wmech_input wmech_inputpreset wmech_namepreset">' +
                 '<input id="wmech_preset' + preset + 'reason" type="text" placeholder="Description" class="wmech_input wmech_inputpreset">' +
                 '<input id="wmech_preset' + preset + 'timeString" type="text" placeholder="Time String" class="wmech_input wmech_inputpreset">' +
-                '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'permanent">Make permanent:</label>' + 
+                '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'permanent">Make permanent:</label>' +
                 '<i class="waze-tooltip wmech_presetpermatooltip" data-original-title="This feature will check the HOV / Service Road adjacent checkbox, meaning the closure will not listen to traffic."></i>' +
                 '<input class="wmech_checkbox wmech_presetcheckbox wmech_presetsetting wmech_presetpermanent" title="Enable permanent closures by default" id="wmech_preset' + preset + 'permanent" type="checkbox">' +
                 '<br><label class="wmech_presetlabel" for="wmech_preset' + preset + 'nodes">Node closures:</label>' +
@@ -90,7 +90,6 @@ var G_AMOUNTOFPRESETS = 100;
             '<ul><li>"m" = Minute</li><li>"h" = Hour</li><li>"d" = Day</li><li>"o" = Month</li><li>"y" = Year</li><li><b>Note: </b> Weeks and other date/times are not supported</li></ul>' +
             '<h3>Name String</h3>' +
             '<ul>' +
-            '<li><b>{{reason}}</b> = The reason associated with the closure</li>' +
             '<li><b>{{type}}</b> = The type of the segment</li>' +
             '<li><b>{{firstSegName}}</b> = The name of the first selected segment, in order of click</li>' +
             '<li><b>{{lastSegName}}</b> = The name of the last selected segment, in order of click</li>' +
@@ -133,6 +132,7 @@ var G_AMOUNTOFPRESETS = 100;
     function initializeSettings() {
         addSettingsBoxes();
         setUpDeletePresetButton();
+        attachObserver();
 
         $(".wmech_inputpreset").change(function() {
             var id = $(this)[0].id;
@@ -195,7 +195,7 @@ var G_AMOUNTOFPRESETS = 100;
         });
         var settingsSaver = setInterval(function() {
             saveSettings();
-            log("Save settings ran.");
+            // log("Save settings ran.");
         }, 60000);
 
         // Enable tooltips
@@ -249,14 +249,14 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     async function saveToServer() {
-        log("Attempting to save to the WazeDev server.");
+        // log("Attempting to save to the WazeDev server.");
         var res = await WazeWrap.Remote.SaveSettings(GM_info.script.name, settings);
         if (res == false) {
             error("Error saving settings to the WazeDev server.");
         } else if (res == null) {
-            log("Tried to save settings to WazeDev server, but you don't have a PIN set.")
+            // log("Tried to save settings to WazeDev server, but you don't have a PIN set.")
         } else {
-            log("Saved settings to WazeDev server.");
+            // log("Saved settings to WazeDev server.");
         }
     }
 
@@ -265,34 +265,30 @@ var G_AMOUNTOFPRESETS = 100;
         var serverSettings = await WazeWrap.Remote.RetrieveSettings(GM_info.script.name);
         var defaultSettings = {
             enabled: true,
-            presets:[
-                {
-                    name: "Your first preset...",
-                    reason: "This is where your closure reason goes...",
-                    timeString: "And this is where your time string goes!",
-                    permanent: false,
-                    nodes: "All",
-                    direction: "Two Way",
-                    mteString: "And the MTE name",
-                    mteMatchIndex: 0,
-                    color: "#ffffff"
-                }
-            ]
+            presets: [{
+                name: "Your first preset...",
+                reason: "This is where your closure reason goes...",
+                timeString: "And this is where your time string goes!",
+                permanent: false,
+                nodes: "All",
+                direction: "Two Way",
+                mteString: "And the MTE name",
+                mteMatchIndex: 0,
+                color: "#ffffff"
+            }]
         };
         if (serverSettings != null && serverSettings.hasOwnProperty("enabled")) {
-            log("Using settings from WazeDev server.");
+            // log("Using settings from WazeDev server.");
             settings = serverSettings;
         } else if (loadedSettings != null && loadedSettings.hasOwnProperty("enabled")) {
-            log("Using settings from local settings.");
+            // log("Using settings from local settings.");
             settings = loadedSettings;
         } else {
-            log("Looks like you don't have settings yet. Using the default settings.");
+            // log("Looks like you don't have settings yet. Using the default settings.");
             settings = defaultSettings;
         }
-        
+
         // Set up presets
-        console.error("WMECH settings");
-        console.error(settings);
         var presets = settings.presets;
         for (var i = 0; i < presets.length; i++) {
             var preset = presets[i];
@@ -317,7 +313,7 @@ var G_AMOUNTOFPRESETS = 100;
                 }
             }
         }
-        if (settings.settingsCheckboxes) { 
+        if (settings.settingsCheckboxes) {
             var settingsCBs = settings.settingsCheckboxes;
             for (var cbKey in settingsCBs) {
                 if (settingsCBs[cbKey]) {
@@ -379,10 +375,10 @@ var G_AMOUNTOFPRESETS = 100;
             }
         });
     });
-    attachObserver();
 
     function attachObserver() {
         log("Observing...");
+        WazeWrap.Events.unregister("selectionchanged", null, attachObserver);
         if (document.querySelector(".closures-list")) {
             observer.observe(document.getElementById('edit-panel'), { childList: true, subtree: true });
             addClosureButtons();
@@ -390,7 +386,7 @@ var G_AMOUNTOFPRESETS = 100;
             addClosureCounter();
             formatClosureList();
         } else {
-            setTimeout(attachObserver, 400);
+            WazeWrap.Events.register("selectionchanged", null, attachObserver);
         }
     }
 
@@ -418,7 +414,6 @@ var G_AMOUNTOFPRESETS = 100;
             var color = $(".wmech_colorinput").eq(presetCount - 1).val();
             var textColor = getTextContrastColor(color);
             if (nameInput) {
-                //console.log("trying to actually add button " + presetCount);
                 $("#segment-edit-closures").append(
                     $('<button>', {
                         id: ('wmechButton' + presetCount),
@@ -447,7 +442,7 @@ var G_AMOUNTOFPRESETS = 100;
         $(".closure-item").css("margin-bottom", "5px").css("padding", "0");
         $(".section").css("padding", "0");
         $(".dates").css("margin-left", "10px");
-        $(".closure-title").css("padding", "0").css("min-height","19px");
+        $(".closure-title").css("padding", "0").css("min-height", "19px");
         $(".buttons").css("top", "0px");
     }
 
@@ -466,21 +461,28 @@ var G_AMOUNTOFPRESETS = 100;
         });
 
         // Add select all closures checkbox
-        var holderDiv = $("<div />", {id: "wmech_selectAllDiv"}).css("margin-bottom", "4px");
-        holderDiv.append(
-            $("<input />", {type: "checkbox", id: "wmech_selectAllCheckbox"}).click(function() {
-                $(".wmech_bulkCheckbox").prop("checked", this.checked);
-                toggleBulkButtons();
-            }));
-        holderDiv.append($("<p />", {id: "wmech_selectAllText"}).text("Select all closures"));
-        $(".full-closures").prepend(holderDiv);
+        if ($(".closure-item").length) {
+            var holderDiv = $("<div />", { id: "wmech_selectAllDiv" }).css("margin-bottom", "4px");
+            holderDiv.append(
+                $("<input />", { type: "checkbox", id: "wmech_selectAllCheckbox" }).click(function() {
+                    $(".wmech_bulkCheckbox").prop("checked", this.checked);
+                    toggleBulkButtons();
+                }));
+            holderDiv.append($("<p />", { id: "wmech_selectAllText" }).text("Select all closures"));
+            $(".full-closures").prepend(holderDiv);
+        }
     }
 
-    function toggleBulkButtons(){
+    function toggleBulkButtons() {
         if ($(":checkbox.wmech_bulkCheckbox:checked").length == 0)
             hideBulkButtons();
         else
             showBulkButtons();
+        if ($(":checkbox.wmech_bulkCheckbox:checked").length == 0) {
+            $("#wmech_selectAllCheckbox").prop("checked", false);
+        } else if ($(":checkbox.wmech_bulkCheckbox:checked").length == $(":checkbox.wmech_bulkCheckbox").length) {
+            $("#wmech_selectAllCheckbox").prop("checked", true);
+        }
     }
 
     function makeBulkButtons() {
@@ -537,20 +539,10 @@ var G_AMOUNTOFPRESETS = 100;
                         nodes.push(false);
                     }
                 });
-                log("title: " + title);
-                log("dir: " + dir);
-                log("start date: " + startDate);
-                log("start time: " + startTime);
-                log("end date: " + endDate);
-                log("end time: " + endTime);
-                log("mte: " + mte);
-                log("perm: " + permanentChecked);
-                log("nodes: ");
 
                 // Now, time to add a new closure!
                 $(".cancel-button").click();
                 $(".add-closure-button").click();
-                log("Clicked the button.");
                 $("#closure_direction").val(dir).change();
                 $("#closure_reason").val(title).change();
                 $("#closure_startDate").val(startDate).change();
@@ -716,6 +708,7 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(addMTERadios, 5);
             setTimeout(addLengthExtenders, 5);
             setTimeout(checkIfNeedToAddPanelWatcher, 5);
+            setTimeout(removeClosureLines, 5);
         });
         formatClosureList();
         addClosureCheckboxes();
@@ -761,13 +754,17 @@ var G_AMOUNTOFPRESETS = 100;
         return res;
     }
 
+    function removeClosureLines() {
+        $(".form-group").css("border-top", "0");
+    }
+
     function addClosureSegInfo() {
         var segsLength = $(".length-attribute .value").text();
         segsLength = segsLength.replace(/m/, "m / ");
         var numOfSegs = numOfSegsSelected();
         var segLabel = numOfSegs + " segs (" + segsLength + ")";
         $(".edit-closure form").prepend('<div class="form-group">' +
-            '<span><i class="fa fa-fw fa-chevron-down wmech_seglistchevron"></i></span>' + 
+            '<span><i class="fa fa-fw fa-chevron-down wmech_seglistchevron"></i></span>' +
             '<label id="wmech_seginfolabel" class="control-label" for="closure_reason" style="margin-bottom: 0;">Segments</label>' +
             '<label id="wmech_seginfolabel" class="control-label" style="font-weight: normal;">' + segLabel + '</label>' +
             '<div class="controls"><ul id="wmech_seginfonames">' + '</ul></div></div>');
@@ -797,8 +794,8 @@ var G_AMOUNTOFPRESETS = 100;
             "#closure_startTime, " +
             "#closure_endDate, " +
             "#closure_endTime").on('change paste keyup input', function() {
-                $("#wmech_closurelengthval").text(closureLength());
-            });
+            $("#wmech_closurelengthval").text(closureLength());
+        });
     }
 
     function closureLength() {
@@ -1007,7 +1004,6 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addNodeClosureButtons() {
-        //console.log("Adding node closure buttons.");
         $("label:contains('Closure nodes')").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
             "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
             "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
@@ -1169,29 +1165,37 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_endTime").val(ruleParsed[1]).change();
         var permClosures = $(".wmech_presetcheckbox").eq(ruleIndex).prop("checked");
         if (permClosures) {
-            setTimeout(function() { 
+            setTimeout(function() {
                 $("#closure_permanent").prop("checked", "checked").change();
             }, 50);
         }
         var nodeClosuresOption = $("#wmech_preset" + (ruleIndex + 1) + "nodes").val();
-        if (nodeClosuresOption == "None") { setTimeout(function() {
-            toggleNoNodes(true);
-        }, 50); }
-        if (nodeClosuresOption == "All") { setTimeout(function() { 
-            toggleAllNodes(true); 
-        }, 50);}
-        if (nodeClosuresOption == "Middle") { setTimeout(function() {
-            toggleMiddleNodes(true); 
-        }, 50); }
-        if (nodeClosuresOption == "Ends") { setTimeout(function() {
-            toggleEndsNodes(true); 
-        }, 50); }
+        if (nodeClosuresOption == "None") {
+            setTimeout(function() {
+                toggleNoNodes(true);
+            }, 50);
+        }
+        if (nodeClosuresOption == "All") {
+            setTimeout(function() {
+                toggleAllNodes(true);
+            }, 50);
+        }
+        if (nodeClosuresOption == "Middle") {
+            setTimeout(function() {
+                toggleMiddleNodes(true);
+            }, 50);
+        }
+        if (nodeClosuresOption == "Ends") {
+            setTimeout(function() {
+                toggleEndsNodes(true);
+            }, 50);
+        }
         setTimeout(function() {
             $("#closure_reason").css("background-color", "rgba(63, 188, 113, 0.5)");
             $("#closure_endDate").css("background-color", "rgba(63, 188, 113, 0.5)");
             $("#closure_endTime").css("background-color", "rgba(63, 188, 113, 0.5)");
-            if (permClosures) { 
-                $("#segment-edit-closures > div.closures > div > div > form > div.checkbox.controls-container > label").css("color", "rgba(63, 188, 113, 1)"); 
+            if (permClosures) {
+                $("#segment-edit-closures > div.closures > div > div > form > div.checkbox.controls-container > label").css("color", "rgba(63, 188, 113, 1)");
             }
         }, 20);
         var direction = $("#wmech_preset" + (ruleIndex + 1) + "direction").val();
@@ -1275,6 +1279,9 @@ var G_AMOUNTOFPRESETS = 100;
             case "Minor Highway":
                 newType = "Highway";
                 break;
+            case "< Multiple >":
+                newType = "Roads";
+                break;
             default:
                 newType = rawType;
                 break;
@@ -1306,7 +1313,6 @@ var G_AMOUNTOFPRESETS = 100;
                 if (durationString.match(/^[M|T|W|F|S]/) == null) {
                     var loopLength = durationString.match(/[a-z]/g).length;
                     //alert(newDate);
-                    //console.log(loopLength);
                     for (var i = 0; i < loopLength; i++) {
                         var nextNum = durationString.match(/[^(y|o|d|h|m)]*/)[0];
                         var nextLetter = durationString.match(/[a-z]/g)[0];
@@ -1431,7 +1437,6 @@ var G_AMOUNTOFPRESETS = 100;
         } else {
             var newDate = new Date();
             var loopLength = rule.match(/[a-z]/g).length;
-            //console.log(loopLength);
             for (var i = 0; i < loopLength; i++) {
                 var nextNum = rule.match(/[^(y|o|d|h|m)]*/)[0];
                 var nextLetter = rule.match(/[a-z]/g)[0];
@@ -1454,7 +1459,6 @@ var G_AMOUNTOFPRESETS = 100;
                 }
                 rule = rule.replace(rule.substring(0, (nextNum + nextLetter).length), "");
             }
-            //console.log(newDate);
             return [assembleYear([newDate.getFullYear(), newDate.getMonth() + 1, newDate.getDate()]), assembleTime([newDate.getHours(), newDate.getMinutes()])];
         }
     }
@@ -1499,7 +1503,7 @@ var G_AMOUNTOFPRESETS = 100;
         console.log("WMECH: " + message);
     }
 
-    function error(message) { 
+    function error(message) {
         console.log("WMECH ERROR: " + message);
     }
 
