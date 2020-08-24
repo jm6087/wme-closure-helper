@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         WME Closure Helper Beta
+// @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
 // @version      2020.08.24.01
 // @description  A script to help out with WME closure efforts! :D
