@@ -1156,6 +1156,9 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function clickClosure(elem, dbl = false) {
+        if (W.model.actionManager._undoStack.length > 0) {
+            return WazeWrap.Alerts.error(GM_info.script.name, "Can't add closure because you have unsaved edits.");
+        }
         $("wz-button.add-closure-button").click();
         var ruleIndex = parseInt($(elem).data("preset-val"));
         var nameString = $("#wmech_preset" + (ruleIndex + 1) + "reason").val();
