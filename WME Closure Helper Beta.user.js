@@ -485,7 +485,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function makeBulkButtons() {
         var $buttonDiv = $("<div />", { id: "wmech_bulkButtonDiv" }).css("margin-bottom", "10px");
-        var $deleteAllButton = $("<button />", { id: "wmech_bulkDeleteAll", "class": "wmech_closurebutton" }).css("background-color", "red").css("color", "white").text("Delete All");
+        var $deleteAllButton = $("<button />", { id: "wmech_bulkDeleteAll", "class": "wmech_closurebutton" }).css("background-color", "red").css("color", "white").text("Delete Selected Closures");
         var $xButton = $("<button />", { id: "wmech_bulkX", "class": "wmech_closurebutton" }).css("background-color", "black").css("color", "red").css("float", "right").css("width", "10%").text("X");
         var $cloneButton = $("<button />", { id: "wmech_bulkClone", "class": "wmech_closurebutton" }).css("background-color", "green").css("color", "white").text("Simple Clone");
         // var $propertiesButton = $("<button />", { id: "wmech_bulkProperties", "class": "wmech_closurebutton" }).css("background-color", "orange").css("color", "white").text("Edit Properties");
