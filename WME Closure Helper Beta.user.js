@@ -43,7 +43,7 @@ var G_AMOUNTOFPRESETS = 100;
             formString += '<div class="wmech_presetdiv" id="wmech_presetrow' + preset + '"><label class="wmech_presetlabel" style="text-align: center; width: 100%; margin-left: 0; margin-bottom: 0;" for="wmech_preset' + preset + 'name">Preset ' + preset + '</label>' +
                 '<input id="wmech_preset' + preset + 'name" type="text" placeholder="Name" class="wmech_input wmech_inputpreset wmech_namepreset">' +
                 '<input id="wmech_preset' + preset + 'reason" type="text" placeholder="Description" class="wmech_input wmech_inputpreset">' +
-                '<input id="wmech_preset' + preset + 'timeString" type="text" placeholder="Time String" class="wmech_input wmech_inputpreset">' +
+                '<input id="wmech_preset' + preset + 'timeString" type="text" placeholder="Time String (default U: 23:59)" class="wmech_input wmech_inputpreset">' +
                 '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'permanent">Make permanent:</label>' +
                 '<i class="waze-tooltip wmech_presetpermatooltip" data-original-title="This feature will check the HOV / Service Road adjacent checkbox, meaning the closure will not listen to traffic."></i>' +
                 '<input class="wmech_checkbox wmech_presetcheckbox wmech_presetsetting wmech_presetpermanent" title="Enable permanent closures by default" id="wmech_preset' + preset + 'permanent" type="checkbox">' +
@@ -58,13 +58,11 @@ var G_AMOUNTOFPRESETS = 100;
                 '<option>Two Way</option>' +
                 '<option>A --> B</option>' +
                 '<option>B --> A</option>' +
-                '</select><div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteString">MTE Search:</label>' +
+                '</select><div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteString">MTE:</label>' +
                 '<input style="width: 50%;" id="wmech_preset' + preset + 'mteString" type="text" placeholder="MTE Search" class="wmech_input wmech_inputpreset wmech_presetsetting wmech_presetmteString"></div>' +
-                '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteMatchIndex">MTE Regex Match #:</label>' +
-                '<input style="width: 20%;" id="wmech_preset' + preset + 'mteMatchIndex" type="text" placeholder="Match #" class="wmech_input wmech_inputpreset wmech_presetsetting wmech_presetmteMatchIndex">' +
                 '<div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'color">Color:</label>' +
                 '<input class="wmech_colorinput wmech_presetsetting wmech_presetcolor" type="color" id="wmech_preset' + preset + 'color"></div>' +
-                '<button class="wmech_closurebutton wmech_presetdeletebutton" style="background-color: red;">Delete Preset</button>' +
+                '<button class="wmech_closurebutton wmech_presetdeletebutton" style="background-color: red; color: white;">Delete Preset</button>' +
                 '</div>';
         }
         var tabString = '<ul class="nav nav-tabs"><li class="active"><a data-toggle="tab" href="#wmech-tab-presets">Presets</a></li>' +
@@ -1163,9 +1161,11 @@ var G_AMOUNTOFPRESETS = 100;
         var ruleIndex = parseInt($(elem).data("preset-val"));
         var nameString = $("#wmech_preset" + (ruleIndex + 1) + "reason").val();
         $("#closure_reason").val(closureName(nameString)).change();
-        var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
-        $("#closure_endDate").val(ruleParsed[0]).change();
-        $("#closure_endTime").val(ruleParsed[1]).change();
+        if ($("#wmech_preset" + (ruleIndex + 1) + "timeString").val().length > 0) {
+            var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
+            $("#closure_endDate").val(ruleParsed[0]).change();
+            $("#closure_endTime").val(ruleParsed[1]).change();
+        }
         var permClosures = $(".wmech_presetcheckbox").eq(ruleIndex).prop("checked");
         if (permClosures) {
             setTimeout(function() {
@@ -1213,30 +1213,27 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_direction").val(dirNumber).change();
         var mteRegEx = $("#wmech_preset" + (ruleIndex + 1) + "mteString").val();
         if (mteRegEx.length > 0) {
-            var matchNum = $("#wmech_preset" + (ruleIndex + 1) + "mteMatchIndex").val();
-            var mteFuncResult = matchMTE(mteRegEx, matchNum);
+            var mteFuncResult = matchMTE(mteRegEx);
             if (mteFuncResult != false) {
                 $("#closure_eventId").val(mteFuncResult.val.toString());
             }
         }
     }
 
-    function matchMTE(match, matchNum) {
+    function matchMTE(match) {
         var mtes = [];
         $("#closure_eventId").children().each(function() {
             var text = $(this).text();
             var val = $(this).val();
             mtes.push({ 'name': text, 'val': val });
         });
-        var re = new RegExp(match, "g");
-        var matches = [];
         for (var i = 0; i < mtes.length; i++) {
-            if (mtes[i].name.match(re) != null) {
-                matches.push(mtes[i]);
+            if (mtes[i].name.toLowerCase() == match.toLowerCase()) {
+                console.log(mtes[i]);
+                return mtes[i];
             }
         }
-        if (matches.length == 0) { return false; }
-        return matches[matchNum];
+        return false;
     }
 
     function closureName(reason) {
