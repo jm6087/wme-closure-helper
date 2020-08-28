@@ -819,8 +819,8 @@ var G_AMOUNTOFPRESETS = 100;
         var endTimeResult = regex2.exec(endTime);
         var endHour = endTimeResult[1];
         var endMin = endTimeResult[2];
-        var d1 = new Date(startYear, startMonth, startDay, startHour, startMin, 0, 0);
-        var d2 = new Date(endYear, endMonth, endDay, endHour, endMin, 0, 0);
+        var d1 = new Date(startYear, parseInt(startMonth) - 1, startDay, startHour, startMin, 0, 0);
+        var d2 = new Date(endYear, parseInt(endMonth) - 1, endDay, endHour, endMin, 0, 0);
         if (d2 - d1 < 0) {
             endDateBeforeStartDate();
             return "End date is before start date!";
