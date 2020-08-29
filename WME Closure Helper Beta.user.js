@@ -368,6 +368,9 @@ var G_AMOUNTOFPRESETS = 100;
                         addPanelWatcher();
                         addClosureCounter();
                         formatClosureList();
+                        $(".showHistory").click(function() {
+                            setTimeout(addEnhancedClosureHistory, 1000);
+                        });
                     }
                 }
             }
@@ -383,6 +386,9 @@ var G_AMOUNTOFPRESETS = 100;
             addPanelWatcher();
             addClosureCounter();
             formatClosureList();
+            $(".showHistory").click(function() {
+                setTimeout(addEnhancedClosureHistory, 1000);
+            });
         } else {
             WazeWrap.Events.register("selectionchanged", null, attachObserver);
         }
@@ -442,6 +448,98 @@ var G_AMOUNTOFPRESETS = 100;
         $(".dates").css("margin-left", "10px");
         $(".closure-title").css("padding", "0").css("min-height", "19px");
         $(".buttons").css("top", "0px");
+    }
+
+    function addEnhancedClosureHistory() {
+        var segId = W.selectionManager._getSelectedSegments()[0].attributes.id;
+        var url = "https://" + document.location.host + W.Config.api_base + "/ElementHistory?objectID=" + segId + "&objectType=segment";
+        $.get(url).success(function(res) {
+            var transactions = res.transactions.objects;
+            for (var i = 0; i < transactions.length; i++) {
+                var count = 0;
+                var closureDetails = {};
+                var objs = transactions[i].objects;
+                var firstObj = objs[0];
+                var type = "None";
+                if (firstObj.actionType == "UPDATE" && firstObj.objectType == "roadClosure") {
+                    type = "Update";
+                } else if (firstObj.actionType == "ADD" && firstObj.objectType == "roadClosure") {
+                    type = "Add";
+                } else if (firstObj.actionType == "DELETE" && firstObj.objectType == "roadClosure") {
+                    type = "Delete";
+                }
+                for (var f = 0; f < objs.length; f++) {
+                    count++;
+                    if (type == "Delete") {
+                        closureDetails.TransactionID = transactions[i].transactionID;
+                        //closureDetails.ObjectID = objs[f].objectID;
+                        closureDetails.EndDate = objs[f].oldValue.endDate;
+                        closureDetails.StartDate = objs[f].oldValue.startDate;
+                        closureDetails.Active = objs[f].oldValue.active;
+                        closureDetails.Direction = "Unknown";
+                        if (count == 2) {
+                            closureDetails.Direction = "Two Way";
+                        } else {
+                            closureDetails.Direction = (objs[f].oldValue.forward == true ? "A --> B" : "B --> A");
+                        }
+                        closureDetails.Permanent = objs[f].oldValue.permanent;
+                        closureDetails.Reason = objs[f].oldValue.reason;
+                        closureDetails.EventID = objs[f].oldValue.eventId;
+                        var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
+                        if (mte != undefined) {
+                            closureDetails.mteName = mte.attributes.names[0].value;
+                        } else {
+                            closureDetails.mteName = "MTE was deleted/expired :(";
+                        }
+                    } else if (type == "Update") {
+                        closureDetails.TransactionID = transactions[i].transactionID;
+                        var oldValue = objs[f].oldValue;
+                        var newValue = objs[f].newValue;
+                        for (var k in oldValue) {
+                            if (oldValue.hasOwnProperty(k)) {
+                                var tempObj = {};
+                                tempObj["OLD" + k] = oldValue[k];
+                                Object.assign(closureDetails, tempObj);
+                            }
+                        }
+                        for (var k in newValue) {
+                            if (newValue.hasOwnProperty(k)) {
+                                var tempObj = {};
+                                tempObj["NEW" + k] = newValue[k];
+                                Object.assign(closureDetails, tempObj);
+                            }
+                        }
+                    } else if (type == "Add") {
+                        closureDetails.TransactionID = transactions[i].transactionID;
+                        //closureDetails.ObjectID = objs[f].objectID;
+                        closureDetails.EndDate = objs[f].newValue.endDate;
+                        closureDetails.StartDate = objs[f].newValue.startDate;
+                        closureDetails.Active = objs[f].newValue.active;
+                        closureDetails.Direction = "Unknown";
+                        if (count == 2) {
+                            closureDetails.Direction = "Two Way";
+                        } else {
+                            closureDetails.Direction = (objs[f].newValue.forward == true ? "A --> B" : "B --> A");
+                        }
+                        closureDetails.Reason = objs[f].newValue.reason;
+                        closureDetails.Permanent = objs[f].newValue.permanent;
+                        closureDetails.EventID = objs[f].newValue.eventId;
+                        var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
+                        if (mte != undefined) {
+                            closureDetails.mteName = mte.attributes.names[0].value;
+                        } else {
+                            closureDetails.mteName = "MTE was deleted/expired :(";
+                        }
+                    }
+                }
+                var $ul = $(".transactions").find("[data-transaction-i-d='" + closureDetails.TransactionID + "']").find(".related-objects-region ul");
+                for (var k in closureDetails) {
+                    if (closureDetails.hasOwnProperty(k)) {
+                        $ul.append($("<li />").text(k + ": " + closureDetails[k]));
+                    }
+                }
+            }
+        }).error(error("There was an error retrieving detailed closure history."));
     }
 
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
