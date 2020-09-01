@@ -118,17 +118,36 @@ var G_AMOUNTOFPRESETS = 100;
         }, 1000);
     }
 
-    function addSettingsBoxes() {
+    function prepareSettings() {
         addSettingsCheckbox("Set segment list on closures to default collapsed", "wmech_settingseglistcollapse");
         addSettingsCheckbox("Direction click-saver buttons do not use directional cursors", "wmech_settingdircsdircur");
+        addSettingsHeader("Time Zone Settings");
+        addSettingsCheckbox("Enable time zone warning", "wmech_settingtimezonewarn");
+        addSettingsInput("timezonedb.com/api Personal Key", "wmech_settingtimezoneapi");
+
+        $("#wmech_settingtimezonewarn").change(function() {
+            if (!this.checked) {
+                $("#wmech_settingtimezoneapi").prop('disabled', true);
+            } else {
+                $("#wmech_settingtimezoneapi").prop('disabled', false);
+            }
+        });
     }
 
     function addSettingsCheckbox(text, id) {
         $("#wmech-settings-boxes").append("<div class='controls-container'><input class='wmech_checkbox wmech_settingscheckbox' id='" + id + "' type='checkbox'><label class='wmechSettingsLabel' for='" + id + "'>" + text + "</label></div><br>");
     }
 
+    function addSettingsHeader(text) {
+        $("#wmech-settings-boxes").append("<p class='wmech_settingsheader'>" + text + "</p>");
+    }
+
+    function addSettingsInput(placeholder, id) {
+        $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset'>");
+    }
+
     function initializeSettings() {
-        addSettingsBoxes();
+        prepareSettings();
         setUpDeletePresetButton();
         attachObserver();
 
@@ -795,6 +814,28 @@ var G_AMOUNTOFPRESETS = 100;
         setTimeout(addPanelWatcher, 3000);
     }
 
+    function timeZoneCompare() {
+        if ($("#wmech_settingtimezonewarn").is(":checked")) {
+            var apiVal = $("#wmech_settingtimezoneapi").val();
+            var center = W.map.getCenter();
+            var actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
+            var d = new Date();
+            $.get("https://api.timezonedb.com/v2.1/get-time-zone?key=" + apiVal + "&format=json&by=position&lat=" + actualCenter.lat + "&lng=" + actualCenter.lon).success(function(res) {
+                var newD = new Date(res.formatted);
+                var diff = Math.round((newD - d) / (1000 * 60 * 60));
+                var timeZone = res.abbreviation;
+                if (diff < 0) {
+                    var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind."
+                } else {
+                    var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
+                }
+                if (diff != 0) {
+                    $(".form-group:nth-of-type(3)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
+                }
+            });
+        }
+    }
+
     function addPanelWatcher() {
         $("li.closure-item, .add-closure-button").click(function() {
             setTimeout(addNodeClosureButtons, 5);
@@ -805,6 +846,7 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(addLengthExtenders, 5);
             setTimeout(checkIfNeedToAddPanelWatcher, 5);
             setTimeout(removeClosureLines, 5);
+            setTimeout(timeZoneCompare, 5);
         });
         formatClosureList();
         addClosureCheckboxes();
@@ -1247,7 +1289,10 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmech_presetpermatooltip { margin-left: 10px; }",
             "#wmech_selectAllCheckbox { margin-left: 4px; } ",
             "#wmech_selectAllDiv { margin-bottom: 4px } ",
-            "#wmech_selectAllText { font-weight: bold; margin-left: 4px; display: inline }"
+            "#wmech_selectAllText { font-weight: bold; margin-left: 4px; display: inline }",
+            ".wmech_settingsheader { font-weight: bold; margin-bottom: 0 !important; }",
+            ".wmech_timezonewarnmessage { text-align: center }",
+            ".wmech_timezonewarnmessage span { font-weight: bold; color: #823700; }"
         ].join('\n\n'));
     }
 
