@@ -143,7 +143,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addSettingsInput(placeholder, id) {
-        $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset'>");
+        $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset wmech_settingsinput'>");
     }
 
     function initializeSettings() {
@@ -209,6 +209,16 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.settingsCheckboxes = {};
             }
             settings.settingsCheckboxes[settingName] = $(this).is(":checked");
+        });
+        $(".wmech_settingsinput").on('change paste keyup input', function() {
+            var id = $(this)[0].id;
+            var harvestIdInfoRE = new RegExp(/wmech_setting(.*)/);
+            var harvestIdInfo = id.match(harvestIdInfoRE);
+            var settingName = harvestIdInfo[1];
+            if (!settings.settingsInputs) {
+                settings.settingsInputs = {};
+            }
+            settings.settingsInputs[settingName] = $(this).val();
         });
         var settingsSaver = setInterval(function() {
             saveSettings();
@@ -336,6 +346,12 @@ var G_AMOUNTOFPRESETS = 100;
                 if (settingsCBs[cbKey]) {
                     $("#wmech_setting" + cbKey).attr("checked", "checked");
                 }
+            }
+        }
+        if (settings.settingsInputs) {
+            var settingsInputs = settings.settingsInputs;
+            for (var key in settingsInputs) {
+                $("#wmech_setting" + key).val(settingsInputs[key]);
             }
         }
         initCSS();
@@ -558,7 +574,11 @@ var G_AMOUNTOFPRESETS = 100;
                     }
                 }
             }
-        }).error(error("There was an error retrieving detailed closure history."));
+        }).error(function(j, e) {
+            error("There was an error retrieving detailed closure history:")
+            console.log(j);
+            console.log(e);
+        });
     }
 
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
@@ -1292,7 +1312,8 @@ var G_AMOUNTOFPRESETS = 100;
             "#wmech_selectAllText { font-weight: bold; margin-left: 4px; display: inline }",
             ".wmech_settingsheader { font-weight: bold; margin-bottom: 0 !important; }",
             ".wmech_timezonewarnmessage { text-align: center }",
-            ".wmech_timezonewarnmessage span { font-weight: bold; color: #823700; }"
+            ".wmech_timezonewarnmessage span { font-weight: bold; color: #823700; }",
+            ".wmech_settingsinput { text-align: center; width: 100%; }"
         ].join('\n\n'));
     }
 
