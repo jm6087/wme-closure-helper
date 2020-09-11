@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2020.08.24.01
+// @version      2020.09.10.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -43,7 +43,7 @@ var G_AMOUNTOFPRESETS = 100;
             formString += '<div class="wmech_presetdiv" id="wmech_presetrow' + preset + '"><label class="wmech_presetlabel" style="text-align: center; width: 100%; margin-left: 0; margin-bottom: 0;" for="wmech_preset' + preset + 'name">Preset ' + preset + '</label>' +
                 '<input id="wmech_preset' + preset + 'name" type="text" placeholder="Name" class="wmech_input wmech_inputpreset wmech_namepreset">' +
                 '<input id="wmech_preset' + preset + 'reason" type="text" placeholder="Description" class="wmech_input wmech_inputpreset">' +
-                '<input id="wmech_preset' + preset + 'timeString" type="text" placeholder="Time String" class="wmech_input wmech_inputpreset">' +
+                '<input id="wmech_preset' + preset + 'timeString" type="text" placeholder="Time String (default U: 23:59)" class="wmech_input wmech_inputpreset">' +
                 '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'permanent">Make permanent:</label>' +
                 '<i class="waze-tooltip wmech_presetpermatooltip" data-original-title="This feature will check the HOV / Service Road adjacent checkbox, meaning the closure will not listen to traffic."></i>' +
                 '<input class="wmech_checkbox wmech_presetcheckbox wmech_presetsetting wmech_presetpermanent" title="Enable permanent closures by default" id="wmech_preset' + preset + 'permanent" type="checkbox">' +
@@ -58,13 +58,11 @@ var G_AMOUNTOFPRESETS = 100;
                 '<option>Two Way</option>' +
                 '<option>A --> B</option>' +
                 '<option>B --> A</option>' +
-                '</select><div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteString">MTE Search:</label>' +
+                '</select><div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteString">MTE:</label>' +
                 '<input style="width: 50%;" id="wmech_preset' + preset + 'mteString" type="text" placeholder="MTE Search" class="wmech_input wmech_inputpreset wmech_presetsetting wmech_presetmteString"></div>' +
-                '<label class="wmech_presetlabel" for="wmech_preset' + preset + 'mteMatchIndex">MTE Regex Match #:</label>' +
-                '<input style="width: 20%;" id="wmech_preset' + preset + 'mteMatchIndex" type="text" placeholder="Match #" class="wmech_input wmech_inputpreset wmech_presetsetting wmech_presetmteMatchIndex">' +
                 '<div><label class="wmech_presetlabel" for="wmech_preset' + preset + 'color">Color:</label>' +
                 '<input class="wmech_colorinput wmech_presetsetting wmech_presetcolor" type="color" id="wmech_preset' + preset + 'color"></div>' +
-                '<button class="wmech_closurebutton wmech_presetdeletebutton" style="background-color: red;">Delete Preset</button>' +
+                '<button class="wmech_closurebutton wmech_presetdeletebutton" style="background-color: red; color: white;">Delete Preset</button>' +
                 '</div>';
         }
         var tabString = '<ul class="nav nav-tabs"><li class="active"><a data-toggle="tab" href="#wmech-tab-presets">Presets</a></li>' +
@@ -120,17 +118,36 @@ var G_AMOUNTOFPRESETS = 100;
         }, 1000);
     }
 
-    function addSettingsBoxes() {
+    function prepareSettings() {
         addSettingsCheckbox("Set segment list on closures to default collapsed", "wmech_settingseglistcollapse");
         addSettingsCheckbox("Direction click-saver buttons do not use directional cursors", "wmech_settingdircsdircur");
+        addSettingsHeader("Time Zone Settings");
+        addSettingsCheckbox("Enable time zone warning", "wmech_settingtimezonewarn");
+        addSettingsInput("timezonedb.com/api Personal Key", "wmech_settingtimezoneapi");
+
+        $("#wmech_settingtimezonewarn").change(function() {
+            if (!this.checked) {
+                $("#wmech_settingtimezoneapi").prop('disabled', true);
+            } else {
+                $("#wmech_settingtimezoneapi").prop('disabled', false);
+            }
+        });
     }
 
     function addSettingsCheckbox(text, id) {
         $("#wmech-settings-boxes").append("<div class='controls-container'><input class='wmech_checkbox wmech_settingscheckbox' id='" + id + "' type='checkbox'><label class='wmechSettingsLabel' for='" + id + "'>" + text + "</label></div><br>");
     }
 
+    function addSettingsHeader(text) {
+        $("#wmech-settings-boxes").append("<p class='wmech_settingsheader'>" + text + "</p>");
+    }
+
+    function addSettingsInput(placeholder, id) {
+        $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset wmech_settingsinput'>");
+    }
+
     function initializeSettings() {
-        addSettingsBoxes();
+        prepareSettings();
         setUpDeletePresetButton();
         attachObserver();
 
@@ -192,6 +209,16 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.settingsCheckboxes = {};
             }
             settings.settingsCheckboxes[settingName] = $(this).is(":checked");
+        });
+        $(".wmech_settingsinput").on('change paste keyup input', function() {
+            var id = $(this)[0].id;
+            var harvestIdInfoRE = new RegExp(/wmech_setting(.*)/);
+            var harvestIdInfo = id.match(harvestIdInfoRE);
+            var settingName = harvestIdInfo[1];
+            if (!settings.settingsInputs) {
+                settings.settingsInputs = {};
+            }
+            settings.settingsInputs[settingName] = $(this).val();
         });
         var settingsSaver = setInterval(function() {
             saveSettings();
@@ -321,6 +348,12 @@ var G_AMOUNTOFPRESETS = 100;
                 }
             }
         }
+        if (settings.settingsInputs) {
+            var settingsInputs = settings.settingsInputs;
+            for (var key in settingsInputs) {
+                $("#wmech_setting" + key).val(settingsInputs[key]);
+            }
+        }
         initCSS();
         loadDropdown();
     }
@@ -370,6 +403,9 @@ var G_AMOUNTOFPRESETS = 100;
                         addPanelWatcher();
                         addClosureCounter();
                         formatClosureList();
+                        $(".showHistory").click(function() {
+                            setTimeout(addEnhancedClosureHistory, 1000);
+                        });
                     }
                 }
             }
@@ -385,6 +421,9 @@ var G_AMOUNTOFPRESETS = 100;
             addPanelWatcher();
             addClosureCounter();
             formatClosureList();
+            $(".showHistory").click(function() {
+                setTimeout(addEnhancedClosureHistory, 1000);
+            });
         } else {
             WazeWrap.Events.register("selectionchanged", null, attachObserver);
         }
@@ -446,6 +485,102 @@ var G_AMOUNTOFPRESETS = 100;
         $(".buttons").css("top", "0px");
     }
 
+    function addEnhancedClosureHistory() {
+        var segId = W.selectionManager._getSelectedSegments()[0].attributes.id;
+        var url = "https://" + document.location.host + W.Config.api_base + "/ElementHistory?objectID=" + segId + "&objectType=segment";
+        $.get(url).success(function(res) {
+            var transactions = res.transactions.objects;
+            for (var i = 0; i < transactions.length; i++) {
+                var count = 0;
+                var closureDetails = {};
+                var objs = transactions[i].objects;
+                var firstObj = objs[0];
+                var type = "None";
+                if (firstObj.actionType == "UPDATE" && firstObj.objectType == "roadClosure") {
+                    type = "Update";
+                } else if (firstObj.actionType == "ADD" && firstObj.objectType == "roadClosure") {
+                    type = "Add";
+                } else if (firstObj.actionType == "DELETE" && firstObj.objectType == "roadClosure") {
+                    type = "Delete";
+                }
+                for (var f = 0; f < objs.length; f++) {
+                    count++;
+                    if (type == "Delete") {
+                        closureDetails.TransactionID = transactions[i].transactionID;
+                        //closureDetails.ObjectID = objs[f].objectID;
+                        closureDetails.EndDate = objs[f].oldValue.endDate;
+                        closureDetails.StartDate = objs[f].oldValue.startDate;
+                        closureDetails.Active = objs[f].oldValue.active;
+                        closureDetails.Direction = "Unknown";
+                        if (count == 2) {
+                            closureDetails.Direction = "Two Way";
+                        } else {
+                            closureDetails.Direction = (objs[f].oldValue.forward == true ? "A --> B" : "B --> A");
+                        }
+                        closureDetails.Permanent = objs[f].oldValue.permanent;
+                        closureDetails.Reason = objs[f].oldValue.reason;
+                        closureDetails.EventID = objs[f].oldValue.eventId;
+                        var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
+                        if (mte != undefined) {
+                            closureDetails.mteName = mte.attributes.names[0].value;
+                        } else {
+                            closureDetails.mteName = "MTE was deleted/expired :(";
+                        }
+                    } else if (type == "Update") {
+                        closureDetails.TransactionID = transactions[i].transactionID;
+                        var oldValue = objs[f].oldValue;
+                        var newValue = objs[f].newValue;
+                        for (var k in oldValue) {
+                            if (oldValue.hasOwnProperty(k)) {
+                                var tempObj = {};
+                                tempObj["OLD" + k] = oldValue[k];
+                                Object.assign(closureDetails, tempObj);
+                            }
+                        }
+                        for (var k in newValue) {
+                            if (newValue.hasOwnProperty(k)) {
+                                var tempObj = {};
+                                tempObj["NEW" + k] = newValue[k];
+                                Object.assign(closureDetails, tempObj);
+                            }
+                        }
+                    } else if (type == "Add") {
+                        closureDetails.TransactionID = transactions[i].transactionID;
+                        //closureDetails.ObjectID = objs[f].objectID;
+                        closureDetails.EndDate = objs[f].newValue.endDate;
+                        closureDetails.StartDate = objs[f].newValue.startDate;
+                        closureDetails.Active = objs[f].newValue.active;
+                        closureDetails.Direction = "Unknown";
+                        if (count == 2) {
+                            closureDetails.Direction = "Two Way";
+                        } else {
+                            closureDetails.Direction = (objs[f].newValue.forward == true ? "A --> B" : "B --> A");
+                        }
+                        closureDetails.Reason = objs[f].newValue.reason;
+                        closureDetails.Permanent = objs[f].newValue.permanent;
+                        closureDetails.EventID = objs[f].newValue.eventId;
+                        var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
+                        if (mte != undefined) {
+                            closureDetails.mteName = mte.attributes.names[0].value;
+                        } else {
+                            closureDetails.mteName = "MTE was deleted/expired :(";
+                        }
+                    }
+                }
+                var $ul = $(".transactions").find("[data-transaction-i-d='" + closureDetails.TransactionID + "']").find(".related-objects-region ul");
+                for (var k in closureDetails) {
+                    if (closureDetails.hasOwnProperty(k)) {
+                        $ul.append($("<li />").text(k + ": " + closureDetails[k]));
+                    }
+                }
+            }
+        }).error(function(j, e) {
+            error("There was an error retrieving detailed closure history:")
+            console.log(j);
+            console.log(e);
+        });
+    }
+
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
         makeBulkButtons();
         $("li.closure-item").css("display", "flex").css("margin-bottom", "5px");
@@ -487,7 +622,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function makeBulkButtons() {
         var $buttonDiv = $("<div />", { id: "wmech_bulkButtonDiv" }).css("margin-bottom", "10px");
-        var $deleteAllButton = $("<button />", { id: "wmech_bulkDeleteAll", "class": "wmech_closurebutton" }).css("background-color", "red").css("color", "white").text("Delete All");
+        var $deleteAllButton = $("<button />", { id: "wmech_bulkDeleteAll", "class": "wmech_closurebutton" }).css("background-color", "red").css("color", "white").text("Delete Selected Closures");
         var $xButton = $("<button />", { id: "wmech_bulkX", "class": "wmech_closurebutton" }).css("background-color", "black").css("color", "red").css("float", "right").css("width", "10%").text("X");
         var $cloneButton = $("<button />", { id: "wmech_bulkClone", "class": "wmech_closurebutton" }).css("background-color", "green").css("color", "white").text("Simple Clone");
         // var $propertiesButton = $("<button />", { id: "wmech_bulkProperties", "class": "wmech_closurebutton" }).css("background-color", "orange").css("color", "white").text("Edit Properties");
@@ -699,6 +834,28 @@ var G_AMOUNTOFPRESETS = 100;
         setTimeout(addPanelWatcher, 3000);
     }
 
+    function timeZoneCompare() {
+        if ($("#wmech_settingtimezonewarn").is(":checked")) {
+            var apiVal = $("#wmech_settingtimezoneapi").val();
+            var center = W.map.getCenter();
+            var actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
+            var d = new Date();
+            $.get("https://api.timezonedb.com/v2.1/get-time-zone?key=" + apiVal + "&format=json&by=position&lat=" + actualCenter.lat + "&lng=" + actualCenter.lon).success(function(res) {
+                var newD = new Date(res.formatted);
+                var diff = Math.round((newD - d) / (1000 * 60 * 60));
+                var timeZone = res.abbreviation;
+                if (diff < 0) {
+                    var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind."
+                } else {
+                    var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
+                }
+                if (diff != 0) {
+                    $(".form-group:nth-of-type(3)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
+                }
+            });
+        }
+    }
+
     function addPanelWatcher() {
         $("li.closure-item, .add-closure-button").click(function() {
             setTimeout(addNodeClosureButtons, 5);
@@ -709,6 +866,7 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(addLengthExtenders, 5);
             setTimeout(checkIfNeedToAddPanelWatcher, 5);
             setTimeout(removeClosureLines, 5);
+            setTimeout(timeZoneCompare, 5);
         });
         formatClosureList();
         addClosureCheckboxes();
@@ -819,8 +977,8 @@ var G_AMOUNTOFPRESETS = 100;
         var endTimeResult = regex2.exec(endTime);
         var endHour = endTimeResult[1];
         var endMin = endTimeResult[2];
-        var d1 = new Date(startYear, startMonth, startDay, startHour, startMin, 0, 0);
-        var d2 = new Date(endYear, endMonth, endDay, endHour, endMin, 0, 0);
+        var d1 = new Date(startYear, parseInt(startMonth) - 1, startDay, startHour, startMin, 0, 0);
+        var d2 = new Date(endYear, parseInt(endMonth) - 1, endDay, endHour, endMin, 0, 0);
         if (d2 - d1 < 0) {
             endDateBeforeStartDate();
             return "End date is before start date!";
@@ -1151,18 +1309,27 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmech_presetpermatooltip { margin-left: 10px; }",
             "#wmech_selectAllCheckbox { margin-left: 4px; } ",
             "#wmech_selectAllDiv { margin-bottom: 4px } ",
-            "#wmech_selectAllText { font-weight: bold; margin-left: 4px; display: inline }"
+            "#wmech_selectAllText { font-weight: bold; margin-left: 4px; display: inline }",
+            ".wmech_settingsheader { font-weight: bold; margin-bottom: 0 !important; }",
+            ".wmech_timezonewarnmessage { text-align: center }",
+            ".wmech_timezonewarnmessage span { font-weight: bold; color: #823700; }",
+            ".wmech_settingsinput { text-align: center; width: 100%; }"
         ].join('\n\n'));
     }
 
     function clickClosure(elem, dbl = false) {
+        if (W.model.actionManager._undoStack.length > 0) {
+            return WazeWrap.Alerts.error(GM_info.script.name, "Can't add closure because you have unsaved edits.");
+        }
         $("wz-button.add-closure-button").click();
         var ruleIndex = parseInt($(elem).data("preset-val"));
         var nameString = $("#wmech_preset" + (ruleIndex + 1) + "reason").val();
         $("#closure_reason").val(closureName(nameString)).change();
-        var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
-        $("#closure_endDate").val(ruleParsed[0]).change();
-        $("#closure_endTime").val(ruleParsed[1]).change();
+        if ($("#wmech_preset" + (ruleIndex + 1) + "timeString").val().length > 0) {
+            var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
+            $("#closure_endDate").val(ruleParsed[0]).change();
+            $("#closure_endTime").val(ruleParsed[1]).change();
+        }
         var permClosures = $(".wmech_presetcheckbox").eq(ruleIndex).prop("checked");
         if (permClosures) {
             setTimeout(function() {
@@ -1210,30 +1377,27 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_direction").val(dirNumber).change();
         var mteRegEx = $("#wmech_preset" + (ruleIndex + 1) + "mteString").val();
         if (mteRegEx.length > 0) {
-            var matchNum = $("#wmech_preset" + (ruleIndex + 1) + "mteMatchIndex").val();
-            var mteFuncResult = matchMTE(mteRegEx, matchNum);
+            var mteFuncResult = matchMTE(mteRegEx);
             if (mteFuncResult != false) {
                 $("#closure_eventId").val(mteFuncResult.val.toString());
             }
         }
     }
 
-    function matchMTE(match, matchNum) {
+    function matchMTE(match) {
         var mtes = [];
         $("#closure_eventId").children().each(function() {
             var text = $(this).text();
             var val = $(this).val();
             mtes.push({ 'name': text, 'val': val });
         });
-        var re = new RegExp(match, "g");
-        var matches = [];
         for (var i = 0; i < mtes.length; i++) {
-            if (mtes[i].name.match(re) != null) {
-                matches.push(mtes[i]);
+            if (mtes[i].name.toLowerCase() == match.toLowerCase()) {
+                console.log(mtes[i]);
+                return mtes[i];
             }
         }
-        if (matches.length == 0) { return false; }
-        return matches[matchNum];
+        return false;
     }
 
     function closureName(reason) {
