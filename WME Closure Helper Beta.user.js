@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2020.09.03.01
+// @version      2020.09.12.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -399,13 +399,7 @@ var G_AMOUNTOFPRESETS = 100;
                     var closuresPanel = addedNode.querySelector('#segment-edit-closures');
 
                     if (closuresPanel) {
-                        addClosureButtons();
-                        addPanelWatcher();
-                        addClosureCounter();
-                        formatClosureList();
-                        $(".showHistory").click(function() {
-                            setTimeout(addEnhancedClosureHistory, 1000);
-                        });
+                        setup();
                     }
                 }
             }
@@ -417,16 +411,20 @@ var G_AMOUNTOFPRESETS = 100;
         WazeWrap.Events.unregister("selectionchanged", null, attachObserver);
         if (document.querySelector(".closures-list")) {
             observer.observe(document.getElementById('edit-panel'), { childList: true, subtree: true });
-            addClosureButtons();
-            addPanelWatcher();
-            addClosureCounter();
-            formatClosureList();
-            $(".showHistory").click(function() {
-                setTimeout(addEnhancedClosureHistory, 1000);
-            });
+            setup();
         } else {
             WazeWrap.Events.register("selectionchanged", null, attachObserver);
         }
+    }
+
+    function setup() {
+        addClosureButtons();
+        addPanelWatcher();
+        addClosureCounter();
+        formatClosureList();
+        $(".showHistory").click(function() {
+            setTimeout(addEnhancedClosureHistory, 1000);
+        });
     }
 
     function addClosureCounter() {
@@ -483,6 +481,8 @@ var G_AMOUNTOFPRESETS = 100;
         $(".dates").css("margin-left", "10px");
         $(".closure-title").css("padding", "0").css("min-height", "19px");
         $(".buttons").css("top", "0px");
+        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
+        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
     }
 
     function addEnhancedClosureHistory() {
@@ -1291,7 +1291,7 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmechCTOpen { background-color: #82b57f; color: white; } ",
             ".wmechCTExtend { background-color: #ffdc00; } ",
             ".wmechCTSubmitPL { background-color: #82b57f; color: white; border-radius: 5px;} ",
-            ".wmech_closureButton { text-align: center; font-family: 'Poppins', 'sans-serif'; font-weight: 700; border: 1px solid gray; background-color: #ddd; color: black; border-radius: 5px; font-size: 11px; text-transform: uppercase; cursor: pointer;} ",
+            ".wmech_closureButton { text-align: center; font-family: 'Rubik', 'Boing-light', sans-serif; font-weight: 700; border: 1px solid gray; background-color: #ddd; color: black; border-radius: 5px; font-size: 11px; text-transform: uppercase; cursor: pointer;} ",
             ".wmech_nodeClosureButton { display: inline-block; width: 23%; margin: 1%;  }",
             ".wmech_dirbutton { width: 100%; margin: 0.3em 0; }",
             ".wmech_buttonNotAllowed { background: lightgray; color: gray; cursor: not-allowed; }",
