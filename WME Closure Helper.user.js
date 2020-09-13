@@ -443,7 +443,7 @@ var G_AMOUNTOFPRESETS = 100;
         var tmpButtonClicks = 0;
         var first = null;
         //alert("Appending node.");
-        $("#segment-edit-closures").append("<div style='margin-top: 10px;'></div>");
+        $("#segment-edit-closures .closures-list").append("<div id='wmech-container' style='margin-top: 10px;'></div>");
         var presetCount = 1;
         for (presetCount = 1; presetCount < G_AMOUNTOFPRESETS; presetCount++) {
             var nameInput = $("#wmech_preset" + presetCount + "name").val();
@@ -451,7 +451,7 @@ var G_AMOUNTOFPRESETS = 100;
             var color = $(".wmech_colorinput").eq(presetCount - 1).val();
             var textColor = getTextContrastColor(color);
             if (nameInput) {
-                $("#segment-edit-closures").append(
+                $("#wmech-container").append(
                     $('<button>', {
                         id: ('wmechButton' + presetCount),
                         class: 'wmech_closurebutton',
@@ -481,8 +481,6 @@ var G_AMOUNTOFPRESETS = 100;
         $(".dates").css("margin-left", "10px");
         $(".closure-title").css("padding", "0").css("min-height", "19px");
         $(".buttons").css("top", "0px");
-        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
-        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
     }
 
     function addEnhancedClosureHistory() {
