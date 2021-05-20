@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.20.00
+// @version      2021.05.20.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -942,8 +942,8 @@ var G_AMOUNTOFPRESETS = 100;
         $(".wmech_seglistchevron").toggleClass("fa-chevron-down fa-chevron-up");
     }
 
-    function addClosureLengthValue() {
-        $("label[for='closure_endDate']").parent().after('<div class="form-group">' +
+function addClosureLengthValue() {
+        $(".form-group.end-date-form-group").after('<div class="form-group">' +
             '<label class="control-label" for="closure_reason">Closure Length</label>' +
             '<div class="controls" style="text-align: center;">' +
             '<span id="wmech_closurelengthval"></span>' +
@@ -955,7 +955,7 @@ var G_AMOUNTOFPRESETS = 100;
             "#closure_endTime").on('change paste keyup input', function() {
             $("#wmech_closurelengthval").text(closureLength());
         });
-    }
+}
 
     function closureLength() {
         var startDate = $("#closure_startDate").val();
@@ -1139,11 +1139,11 @@ var G_AMOUNTOFPRESETS = 100;
     function addToEndStartDate(o, d, m, type = "end") {
         var endDate = $("#closure_" + type + "Date").val();
         var endTime = $("#closure_" + type + "Time").val();
-        var regex = /(.*)-(.*)-(.*)/;
+        var regex = /(.*)\/(.*)\/(.*)/;
         var endDateResult = regex.exec(endDate);
-        var endYear = endDateResult[1];
-        var endMonth = endDateResult[2];
-        var endDay = endDateResult[3];
+        var endYear = endDateResult[3];
+        var endMonth = endDateResult[1];
+        var endDay = endDateResult[2];
         var regex2 = /(.*):(.*)/;
         var endTimeResult = regex2.exec(endTime);
         var endHour = endTimeResult[1];
@@ -1152,7 +1152,7 @@ var G_AMOUNTOFPRESETS = 100;
         res.setTime(res.getTime() + (m * 60 * 1000));
         res.setDate(res.getDate() + d);
         res.setMonth(res.getMonth() + o);
-        var finalDate = res.getFullYear() + "-" + formatTimeProp(parseInt(res.getMonth()) + 1) + "-" + formatTimeProp(res.getDate());
+        var finalDate = formatTimeProp(parseInt(res.getMonth()) + 1) + "/" + formatTimeProp(res.getDate()) + "/" + res.getFullYear();
         var finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
         $("#closure_" + type + "Date").val(finalDate).change();
         $("#closure_" + type + "Time").val(finalTime).change();
