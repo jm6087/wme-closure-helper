@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2020.09.12.01
+// @version      2021.05.20.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // ==/UserScript==
+
 
 /* global W */
 /* global toastr */
@@ -443,7 +444,7 @@ var G_AMOUNTOFPRESETS = 100;
         var tmpButtonClicks = 0;
         var first = null;
         //alert("Appending node.");
-        $("#segment-edit-closures").append("<div style='margin-top: 10px;'></div>");
+        $("#segment-edit-closures .closures-list").append("<div id='wmech-container' style='margin-top: 10px;'></div>");
         var presetCount = 1;
         for (presetCount = 1; presetCount < G_AMOUNTOFPRESETS; presetCount++) {
             var nameInput = $("#wmech_preset" + presetCount + "name").val();
@@ -451,7 +452,7 @@ var G_AMOUNTOFPRESETS = 100;
             var color = $(".wmech_colorinput").eq(presetCount - 1).val();
             var textColor = getTextContrastColor(color);
             if (nameInput) {
-                $("#segment-edit-closures").append(
+                 $("#wmech-container").append(
                     $('<button>', {
                         id: ('wmechButton' + presetCount),
                         class: 'wmech_closurebutton',
@@ -481,8 +482,8 @@ var G_AMOUNTOFPRESETS = 100;
         $(".dates").css("margin-left", "10px");
         $(".closure-title").css("padding", "0").css("min-height", "19px");
         $(".buttons").css("top", "0px");
-        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
-        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
+//        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
+//        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
     }
 
     function addEnhancedClosureHistory() {
@@ -961,7 +962,7 @@ var G_AMOUNTOFPRESETS = 100;
         var startTime = $("#closure_startTime").val();
         var endDate = $("#closure_endDate").val();
         var endTime = $("#closure_endTime").val();
-        var regex = /(.*)-(.*)-(.*)/;
+        var regex = /(.*)\/(.*)\/(.*)/;
         var startDateResult = regex.exec(startDate);
         var startYear = startDateResult[1];
         var startMonth = startDateResult[2];
@@ -1224,7 +1225,7 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_eventId").parent().css("height", 0).css("overflow", "hidden");
         $("#closure_eventId").removeAttr("required");
         $(".mte-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
-        var to = $("#closure_eventId").children().length;
+        var to = $("#closure_eventId").children().length - 1;
         for (var i = 0; i < to; i++) {
             var labelText = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").text();
             var labelVal = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").val();
@@ -1629,7 +1630,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function assembleYear(parts) {
         // parts[0] is yr, parts[1] is mon, parts[2] is day
-        return parts[0] + "-" + addZero(parts[1]) + "-" + addZero(parts[2]);
+        return addZero(parts[1]) + "/" + addZero(parts[2]) + "/" + parts[0];
     }
 
     function assembleTime(parts) {
