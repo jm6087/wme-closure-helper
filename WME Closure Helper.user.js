@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.20.02
+// @version      2021.05.21.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -124,6 +124,8 @@ var G_AMOUNTOFPRESETS = 100;
         addSettingsHeader("Time Zone Settings");
         addSettingsCheckbox("Enable time zone warning", "wmech_settingtimezonewarn");
         addSettingsInput("timezonedb.com/api Personal Key", "wmech_settingtimezoneapi");
+        addSettingsInput("Custom time clicksaver - numbers only then choose checkbox below", "wmech_settingcustomcs");
+        addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
 
         $("#wmech_settingtimezonewarn").change(function() {
             if (!this.checked) {
@@ -145,6 +147,7 @@ var G_AMOUNTOFPRESETS = 100;
     function addSettingsInput(placeholder, id) {
         $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset wmech_settingsinput'>");
     }
+
 
     function initializeSettings() {
         prepareSettings();
@@ -1120,10 +1123,10 @@ function addClosureLengthValue() {
             '<span id="wmech_lEB15m" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #f5ffba;">+15m</span>',
             '<span id="wmech_lEB1h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+1h</span>',
             '<span id="wmech_lEB2h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+2h</span>',
-            '<span id="wmech_lEB12h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+12h</span>',
             '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d</span>',
             '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w</span>',
             '<span id="wmech_lEB1o" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1o</span>',
+            '<span id="wmech_lEB12h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffffff;">12h</span>',
         ].join("\n");
         $("#wmech_closurelengthval").after("<div id='wmech_timeExtenderDiv'></div>");
         $("#wmech_timeExtenderDiv").append($html);
@@ -1131,10 +1134,10 @@ function addClosureLengthValue() {
         $("#wmech_lEB15m").click(function() { addToEndStartDate(0, 0, 15); });
         $("#wmech_lEB1h").click(function() { addToEndStartDate(0, 0, 60); });
         $("#wmech_lEB2h").click(function() { addToEndStartDate(0, 0, 120); });
-        $("#wmech_lEB12h").click(function() { addToEndStartDate(0, 0, 720); });
         $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
         $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
         $("#wmech_lEB1o").click(function() { addToEndStartDate(1, 0, 0); });
+        $("#wmech_lEB12h").click(function() { addToEndStartDate(0, 0, 720); });
     }
 
     function addToEndStartDate(o, d, m, type = "end") {
