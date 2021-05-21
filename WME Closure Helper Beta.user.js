@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         WME Closure Helper Beta
+// @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.20.01
+// @version      2021.05.20.03
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -49,10 +49,10 @@ var G_AMOUNTOFPRESETS = 100;
                 '<input class="wmech_checkbox wmech_presetcheckbox wmech_presetsetting wmech_presetpermanent" title="Enable permanent closures by default" id="wmech_preset' + preset + 'permanent" type="checkbox">' +
                 '<br><label class="wmech_presetlabel" for="wmech_preset' + preset + 'nodes">Node closures:</label>' +
                 '<select class="wmech_presetsetting wmech_presetdropdown wmech_presetnodes" id="wmech_preset' + preset + 'nodes">' +
-                '<option>None</option>' +
-                '<option>All</option>' +
                 '<option>Middle</option>' +
+                '<option>All</option>' +
                 '<option>Ends</option>' +
+                '<option>None</option>' +
                 '</select><br><label class="wmech_presetlabel" for="wmech_preset' + preset + 'direction">Direction:</label>' +
                 '<select class="wmech_presetsetting wmech_presetdropdown wmech_presetdirection" id="wmech_preset' + preset + 'direction">' +
                 '<option>Two Way</option>' +
@@ -261,7 +261,7 @@ var G_AMOUNTOFPRESETS = 100;
         var preset = el;
         preset.find(".wmech_inputpreset").val("").change();
         preset.find(".wmech_presetpermanent").prop("checked", false).change();
-        preset.find(".wmech_presetnodes").val("None").change();
+        preset.find(".wmech_presetnodes").val("Middle").change();
         preset.find(".wmech_presetdirection").val("Two Way").change();
         preset.find(".wmech_presetcolor").val("#000000").change();
     }
@@ -297,7 +297,7 @@ var G_AMOUNTOFPRESETS = 100;
                 reason: "This is where your closure reason goes...",
                 timeString: "And this is where your time string goes!",
                 permanent: false,
-                nodes: "All",
+                nodes: "Middle",
                 direction: "Two Way",
                 mteString: "And the MTE name",
                 mteMatchIndex: 0,
@@ -1052,8 +1052,8 @@ function addClosureLengthValue() {
             }
         }
         var directionalCursors = $("#wmech_settingdircsdircur").is(":checked");
-        $("#closure_direction").parent().prev().after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
-            "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
+        $("#closure_direction").after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
+        "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
             "<div id='wmech_dBTW' class='wmech_closureButton wmech_dirbutton'>Two way (⇆)</div>");
         var permDir = "";
         if ($(".heading").length > 0 && numOfSegsSelected() <= 1) {
@@ -1120,6 +1120,7 @@ function addClosureLengthValue() {
             '<span id="wmech_lEB15m" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #f5ffba;">+15m</span>',
             '<span id="wmech_lEB1h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+1h</span>',
             '<span id="wmech_lEB2h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+2h</span>',
+            '<span id="wmech_lEB12h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+12h</span>',
             '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d</span>',
             '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w</span>',
             '<span id="wmech_lEB1o" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1o</span>',
@@ -1130,6 +1131,7 @@ function addClosureLengthValue() {
         $("#wmech_lEB15m").click(function() { addToEndStartDate(0, 0, 15); });
         $("#wmech_lEB1h").click(function() { addToEndStartDate(0, 0, 60); });
         $("#wmech_lEB2h").click(function() { addToEndStartDate(0, 0, 120); });
+        $("#wmech_lEB12h").click(function() { addToEndStartDate(0, 0, 720); });
         $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
         $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
         $("#wmech_lEB1o").click(function() { addToEndStartDate(1, 0, 0); });
@@ -1162,7 +1164,7 @@ function addClosureLengthValue() {
     }
 
     function addNodeClosureButtons() {
-        $("label:contains('Closure nodes')").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
+        $(".closure-nodes.form-group > wz-label.hydrated").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
             "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
             "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
             "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
@@ -1175,7 +1177,7 @@ function addClosureLengthValue() {
 
     function toggleNoNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", false, colorize);
-    }
+         }
 
     function toggleAllNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
@@ -1337,9 +1339,9 @@ function addClosureLengthValue() {
             }, 50);
         }
         var nodeClosuresOption = $("#wmech_preset" + (ruleIndex + 1) + "nodes").val();
-        if (nodeClosuresOption == "None") {
+        if (nodeClosuresOption == "Middle") {
             setTimeout(function() {
-                toggleNoNodes(true);
+                toggleMiddleNodes(true);
             }, 50);
         }
         if (nodeClosuresOption == "All") {
@@ -1347,14 +1349,14 @@ function addClosureLengthValue() {
                 toggleAllNodes(true);
             }, 50);
         }
-        if (nodeClosuresOption == "Middle") {
-            setTimeout(function() {
-                toggleMiddleNodes(true);
-            }, 50);
-        }
         if (nodeClosuresOption == "Ends") {
             setTimeout(function() {
                 toggleEndsNodes(true);
+            }, 50);
+        }
+                if (nodeClosuresOption == "None") {
+            setTimeout(function() {
+                toggleNoNodes(true);
             }, 50);
         }
         setTimeout(function() {
@@ -1411,6 +1413,12 @@ function addClosureLengthValue() {
         var selectedSegs = W.selectionManager.getSegmentSelection().segments;
         var firstSelectedSegName = W.model.streets.getObjectById(selectedSegs[0].attributes.primaryStreetID).name;
         var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).name;
+        if (firstSelectedSegName == null) {
+            firstSelectedSegName = "";
+        }
+        if (lastSelectedSegName == null) {
+            lastSelectedSegName = "";
+        }
         finalString = finalString.replace("{{firstSegName}}", firstSelectedSegName).replace("{{lastSegName}}", lastSelectedSegName);
 
         // RegEx
