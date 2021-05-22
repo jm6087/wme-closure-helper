@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.22.00
+// @version      2021.05.22.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -22,6 +22,7 @@ var G_AMOUNTOFPRESETS = 100;
 (function() {
     'use strict';
 
+    var customCSmin;
     var settings = {};
 
     //Bootstrap
@@ -124,9 +125,9 @@ var G_AMOUNTOFPRESETS = 100;
         addSettingsHeader("Time Zone Settings");
         addSettingsCheckbox("Enable time zone warning", "wmech_settingtimezonewarn");
         addSettingsInput("timezonedb.com/api Personal Key", "wmech_settingtimezoneapi");
-//        addSettingsInput("Custom time clicksaver - numbers only then choose checkbox below", "wmech_settingcustomcs");
-//        addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
-
+        addSettingsHeader("Custom Minutes - Enter number of minutes (numbers only)");
+        addSettingsInput("Custom time clicksaver - Enter number of minutes", "wmech_settingcustomcs");
+//         addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
         $("#wmech_settingtimezonewarn").change(function() {
             if (!this.checked) {
                 $("#wmech_settingtimezoneapi").prop('disabled', true);
@@ -357,6 +358,7 @@ var G_AMOUNTOFPRESETS = 100;
                 $("#wmech_setting" + key).val(settingsInputs[key]);
             }
         }
+        customCSmin = settings.settingsInputs.customcs;
         initCSS();
         loadDropdown();
     }
@@ -1126,10 +1128,15 @@ function addClosureLengthValue() {
             '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d</span>',
             '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w</span>',
             '<span id="wmech_lEB1o" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1o</span>',
-            '<span id="wmech_lEB12h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffffff;">12h</span>',
+            '<span id="wmech_lEBcustomMin" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffffff;">custom</span>',
         ].join("\n");
         $("#wmech_closurelengthval").after("<div id='wmech_timeExtenderDiv'></div>");
         $("#wmech_timeExtenderDiv").append($html);
+        if (customCSmin == "") {
+            $("#wmech_lEBcustomMin").text("");
+        } else {
+        $("#wmech_lEBcustomMin").text(customCSmin + "m");
+        }
         $("#wmech_lEB1m").click(function() { addToEndStartDate(0, 0, 1); });
         $("#wmech_lEB15m").click(function() { addToEndStartDate(0, 0, 15); });
         $("#wmech_lEB1h").click(function() { addToEndStartDate(0, 0, 60); });
@@ -1137,7 +1144,7 @@ function addClosureLengthValue() {
         $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
         $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
         $("#wmech_lEB1o").click(function() { addToEndStartDate(1, 0, 0); });
-        $("#wmech_lEB12h").click(function() { addToEndStartDate(0, 0, 720); });
+        $("#wmech_lEBcustomMin").click(function() { addToEndStartDate(0, 0, customCSmin); });
     }
 
     function addToEndStartDate(o, d, m, type = "end") {
@@ -1167,7 +1174,7 @@ function addClosureLengthValue() {
     }
 
     function addNodeClosureButtons() {
-        $(".closure-nodes.form-group > wz-label.hydrated").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
+       $(".closure-nodes.form-group > wz-label.hydrated").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
             "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
             "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
             "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
@@ -1211,7 +1218,7 @@ function addClosureLengthValue() {
     }
 
     function colorizeRow(elem) {
-        var root = elem.shadowRoot;
+        var root = elem.shadow-root;
         $(root).find(".wz-slider").css("background-color", "rgb(63, 188, 113)");
         $(elem).parent().parent().css("background-color", "rgba(63, 188, 113, 0.4)");
         $(elem).one("click", function() {
@@ -1220,7 +1227,7 @@ function addClosureLengthValue() {
     }
 
     function uncolorizeRow(button) {
-        var root = button.shadowRoot;
+        var root = button.shadow-root;
         $(root).find(".wz-slider").css("background-color", "");
         $(button).parent().parent().css("background-color", "rgb(242, 244, 247);");
     }
