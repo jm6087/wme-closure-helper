@@ -1136,7 +1136,7 @@ function addClosureLengthValue() {
             '<span id="wmech_lEB2h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+2h</span>',
             '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d</span>',
             '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w</span>',
-            '<span id="wmech_lEB." class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1mo</span>',
+            '<span id="wmech_lEB1mo" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1mo</span>',
             '<span id="wmech_lEBcustomMin" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffffff;">custom</span>',
         ].join("\n");
         $("#wmech_closurelengthval").after("<div id='wmech_timeExtenderDiv'></div>");
