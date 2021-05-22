@@ -124,8 +124,8 @@ var G_AMOUNTOFPRESETS = 100;
         addSettingsHeader("Time Zone Settings");
         addSettingsCheckbox("Enable time zone warning", "wmech_settingtimezonewarn");
         addSettingsInput("timezonedb.com/api Personal Key", "wmech_settingtimezoneapi");
-        addSettingsInput("Custom time clicksaver - numbers only then choose checkbox below", "wmech_settingcustomcs");
-        addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
+//        addSettingsInput("Custom time clicksaver - numbers only then choose checkbox below", "wmech_settingcustomcs");
+//        addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
 
         $("#wmech_settingtimezonewarn").change(function() {
             if (!this.checked) {
