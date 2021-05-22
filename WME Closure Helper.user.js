@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.21.00
+// @version      2021.05.21.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -966,13 +966,13 @@ function addClosureLengthValue() {
         var endTime = $("#closure_endTime").val();
         var regex = /(.*)\/(.*)\/(.*)/;
         var startDateResult = regex.exec(startDate);
-        var startYear = startDateResult[1];
-        var startMonth = startDateResult[2];
-        var startDay = startDateResult[3];
+        var startYear = startDateResult[3];
+        var startMonth = startDateResult[1];
+        var startDay = startDateResult[2];
         var endDateResult = regex.exec(endDate);
-        var endYear = endDateResult[1];
-        var endMonth = endDateResult[2];
-        var endDay = endDateResult[3];
+        var endYear = endDateResult[3];
+        var endMonth = endDateResult[1];
+        var endDay = endDateResult[2];
         var regex2 = /(.*):(.*)/;
         var startTimeResult = regex2.exec(startTime);
         var startHour = startTimeResult[1];
