@@ -1152,7 +1152,7 @@ function addClosureLengthValue() {
         $("#wmech_lEB2h").click(function() { addToEndStartDate(0, 0, 120); });
         $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
         $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
-        $("#wmech_lEB1o").click(function() { addToEndStartDate(1, 0, 0); });
+        $("#wmech_lEB1mo").click(function() { addToEndStartDate(1, 0, 0); });
         $("#wmech_lEBcustomMin").click(function() { addToEndStartDate(0, 0, customCSmin); });
     }
 
