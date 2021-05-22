@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2021.05.22.04
+// @version      ß 2021.05.22.05
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1142,7 +1142,7 @@ function addClosureLengthValue() {
         $("#wmech_closurelengthval").after("<div id='wmech_timeExtenderDiv'></div>");
         $("#wmech_timeExtenderDiv").append($html);
         if (customCSmin == "") {
-            $("#wmech_lEBcustomMin").text("");
+            $("#wmech_lEBcustomMin").css('visibility', 'hidden');
         } else {
         $("#wmech_lEBcustomMin").text(customCSmin + "m");
         }
