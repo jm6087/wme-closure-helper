@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.22.02
+// @version      ß 2021.05.22.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1083,12 +1083,21 @@ function addClosureLengthValue() {
         }
         $("#wmech_dBAB").click(function() {
             $("#closure_direction").val("1").change();
+            $("#wmech_dBAB").css('background-color', '#ffa07a');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBBA").click(function() {
             $("#closure_direction").val("2").change();
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#ffa07a');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBTW").click(function() {
             $("#closure_direction").val("3").change();
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#ffa07a');
         });
         if (segDir == 1) {
             // Segment direction is A --> B
@@ -1187,22 +1196,38 @@ function addClosureLengthValue() {
 
     function toggleNoNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", false, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ffa07a');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
          }
 
     function toggleAllNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#ffa07a');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
     }
 
     function toggleMiddleNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
         panelToggleNodes(".fromNodeClosed:first", false, colorize);
         panelToggleNodes(".fromNodeClosed:last", false, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#ffa07a');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
     }
 
     function toggleEndsNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", false, colorize);
         panelToggleNodes(".fromNodeClosed:first", true, colorize);
         panelToggleNodes(".fromNodeClosed:last", true, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#ffa07a');
     }
 
     function panelToggleNodes(selector, setting, colorize = false) {
