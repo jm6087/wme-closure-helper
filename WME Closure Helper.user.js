@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.22.02
+// @version      2021.05.22.03
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1127,7 +1127,7 @@ function addClosureLengthValue() {
             '<span id="wmech_lEB2h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+2h</span>',
             '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d</span>',
             '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w</span>',
-            '<span id="wmech_lEB1o" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1o</span>',
+            '<span id="wmech_lEB1o" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1mo</span>',
             '<span id="wmech_lEBcustomMin" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffffff;">custom</span>',
         ].join("\n");
         $("#wmech_closurelengthval").after("<div id='wmech_timeExtenderDiv'></div>");
