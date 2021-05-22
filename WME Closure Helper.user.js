@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.22.01
+// @version      2021.05.22.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1303,7 +1303,7 @@ function addClosureLengthValue() {
             ".wmechCTOpen { background-color: #82b57f; color: white; } ",
             ".wmechCTExtend { background-color: #ffdc00; } ",
             ".wmechCTSubmitPL { background-color: #82b57f; color: white; border-radius: 5px;} ",
-            ".wmech_closureButton { text-align: center; font-family: 'Rubik', 'Boing-light', sans-serif; font-weight: 700; border: 1px solid gray; background-color: #ddd; color: black; border-radius: 5px; font-size: 11px; text-transform: uppercase; cursor: pointer;} ",
+            ".wmech_closureButton { text-align: center; font-family: 'Rubik', 'Boing-light', sans-serif; font-weight: 700; border: 1px solid gray; background-color: #ddd; color: black; border-radius: 5px; font-size: 11px; cursor: pointer;} ",
             ".wmech_nodeClosureButton { display: inline-block; width: 23%; margin: 1%;  }",
             ".wmech_dirbutton { width: 100%; margin: 0.3em 0; }",
             ".wmech_buttonNotAllowed { background: lightgray; color: gray; cursor: not-allowed; }",
