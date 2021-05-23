@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.22.03
+// @version      2021.05.23.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -862,6 +862,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addPanelWatcher() {
+        $("li.closure-item, .add-closure-button").off();
         $("li.closure-item, .add-closure-button").click(function() {
             setTimeout(addNodeClosureButtons, 5);
             setTimeout(addDirectionCS, 5);
@@ -872,6 +873,14 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(checkIfNeedToAddPanelWatcher, 5);
             setTimeout(removeClosureLines, 5);
             setTimeout(timeZoneCompare, 5);
+            setTimeout(function() {
+             $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button.hydrated').click(function() {
+                 $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button').off();
+                 $('#segment-edit-closures [class^="wmech"]').remove();
+                 $('#segment-edit-closures [id^="wmech"]').remove();
+                 setTimeout(function() { setup(); }, 50);
+             })
+            }, 20);
         });
         formatClosureList();
         addClosureCheckboxes();
