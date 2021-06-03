@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         WME Closure Helper Beta
+// @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2020.09.12.01
+// @version      ß 2021.05.23.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -22,6 +22,7 @@ var G_AMOUNTOFPRESETS = 100;
 (function() {
     'use strict';
 
+    var customCSmin;
     var settings = {};
 
     //Bootstrap
@@ -49,10 +50,10 @@ var G_AMOUNTOFPRESETS = 100;
                 '<input class="wmech_checkbox wmech_presetcheckbox wmech_presetsetting wmech_presetpermanent" title="Enable permanent closures by default" id="wmech_preset' + preset + 'permanent" type="checkbox">' +
                 '<br><label class="wmech_presetlabel" for="wmech_preset' + preset + 'nodes">Node closures:</label>' +
                 '<select class="wmech_presetsetting wmech_presetdropdown wmech_presetnodes" id="wmech_preset' + preset + 'nodes">' +
-                '<option>None</option>' +
-                '<option>All</option>' +
                 '<option>Middle</option>' +
+                '<option>All</option>' +
                 '<option>Ends</option>' +
+                '<option>None</option>' +
                 '</select><br><label class="wmech_presetlabel" for="wmech_preset' + preset + 'direction">Direction:</label>' +
                 '<select class="wmech_presetsetting wmech_presetdropdown wmech_presetdirection" id="wmech_preset' + preset + 'direction">' +
                 '<option>Two Way</option>' +
@@ -124,7 +125,9 @@ var G_AMOUNTOFPRESETS = 100;
         addSettingsHeader("Time Zone Settings");
         addSettingsCheckbox("Enable time zone warning", "wmech_settingtimezonewarn");
         addSettingsInput("timezonedb.com/api Personal Key", "wmech_settingtimezoneapi");
-
+        addSettingsHeader("Custom Minutes - Enter number of minutes (numbers only)");
+        addSettingsInput("Custom time clicksaver - Enter number of minutes", "wmech_settingcustomcs");
+//         addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
         $("#wmech_settingtimezonewarn").change(function() {
             if (!this.checked) {
                 $("#wmech_settingtimezoneapi").prop('disabled', true);
@@ -145,6 +148,7 @@ var G_AMOUNTOFPRESETS = 100;
     function addSettingsInput(placeholder, id) {
         $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset wmech_settingsinput'>");
     }
+
 
     function initializeSettings() {
         prepareSettings();
@@ -261,7 +265,7 @@ var G_AMOUNTOFPRESETS = 100;
         var preset = el;
         preset.find(".wmech_inputpreset").val("").change();
         preset.find(".wmech_presetpermanent").prop("checked", false).change();
-        preset.find(".wmech_presetnodes").val("None").change();
+        preset.find(".wmech_presetnodes").val("Middle").change();
         preset.find(".wmech_presetdirection").val("Two Way").change();
         preset.find(".wmech_presetcolor").val("#000000").change();
     }
@@ -297,7 +301,7 @@ var G_AMOUNTOFPRESETS = 100;
                 reason: "This is where your closure reason goes...",
                 timeString: "And this is where your time string goes!",
                 permanent: false,
-                nodes: "All",
+                nodes: "Middle",
                 direction: "Two Way",
                 mteString: "And the MTE name",
                 mteMatchIndex: 0,
@@ -354,6 +358,7 @@ var G_AMOUNTOFPRESETS = 100;
                 $("#wmech_setting" + key).val(settingsInputs[key]);
             }
         }
+        customCSmin = settings.settingsInputs.customcs;
         initCSS();
         loadDropdown();
     }
@@ -443,7 +448,7 @@ var G_AMOUNTOFPRESETS = 100;
         var tmpButtonClicks = 0;
         var first = null;
         //alert("Appending node.");
-        $("#segment-edit-closures").append("<div style='margin-top: 10px;'></div>");
+        $("#segment-edit-closures .closures-list").append("<div id='wmech-container' style='margin-top: 10px;'></div>");
         var presetCount = 1;
         for (presetCount = 1; presetCount < G_AMOUNTOFPRESETS; presetCount++) {
             var nameInput = $("#wmech_preset" + presetCount + "name").val();
@@ -451,7 +456,7 @@ var G_AMOUNTOFPRESETS = 100;
             var color = $(".wmech_colorinput").eq(presetCount - 1).val();
             var textColor = getTextContrastColor(color);
             if (nameInput) {
-                $("#segment-edit-closures").append(
+                 $("#wmech-container").append(
                     $('<button>', {
                         id: ('wmechButton' + presetCount),
                         class: 'wmech_closurebutton',
@@ -481,8 +486,8 @@ var G_AMOUNTOFPRESETS = 100;
         $(".dates").css("margin-left", "10px");
         $(".closure-title").css("padding", "0").css("min-height", "19px");
         $(".buttons").css("top", "0px");
-        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
-        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
+//        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
+//        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
     }
 
     function addEnhancedClosureHistory() {
@@ -857,6 +862,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addPanelWatcher() {
+        $("li.closure-item, .add-closure-button").off();
         $("li.closure-item, .add-closure-button").click(function() {
             setTimeout(addNodeClosureButtons, 5);
             setTimeout(addDirectionCS, 5);
@@ -867,6 +873,14 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(checkIfNeedToAddPanelWatcher, 5);
             setTimeout(removeClosureLines, 5);
             setTimeout(timeZoneCompare, 5);
+            setTimeout(function() {
+             $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button.hydrated').click(function() {
+                 $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button').off();
+                 $('#segment-edit-closures [class^="wmech"]').remove();
+                 $('#segment-edit-closures [id^="wmech"]').remove();
+                 setTimeout(function() { setup(); }, 50);
+             })
+            }, 20);
         });
         formatClosureList();
         addClosureCheckboxes();
@@ -941,8 +955,8 @@ var G_AMOUNTOFPRESETS = 100;
         $(".wmech_seglistchevron").toggleClass("fa-chevron-down fa-chevron-up");
     }
 
-    function addClosureLengthValue() {
-        $("label[for='closure_endDate']").parent().after('<div class="form-group">' +
+function addClosureLengthValue() {
+        $(".form-group.end-date-form-group").after('<div class="form-group">' +
             '<label class="control-label" for="closure_reason">Closure Length</label>' +
             '<div class="controls" style="text-align: center;">' +
             '<span id="wmech_closurelengthval"></span>' +
@@ -954,22 +968,22 @@ var G_AMOUNTOFPRESETS = 100;
             "#closure_endTime").on('change paste keyup input', function() {
             $("#wmech_closurelengthval").text(closureLength());
         });
-    }
+}
 
     function closureLength() {
         var startDate = $("#closure_startDate").val();
         var startTime = $("#closure_startTime").val();
         var endDate = $("#closure_endDate").val();
         var endTime = $("#closure_endTime").val();
-        var regex = /(.*)-(.*)-(.*)/;
+        var regex = /(.*)\/(.*)\/(.*)/;
         var startDateResult = regex.exec(startDate);
-        var startYear = startDateResult[1];
-        var startMonth = startDateResult[2];
-        var startDay = startDateResult[3];
+        var startYear = startDateResult[3];
+        var startMonth = startDateResult[1];
+        var startDay = startDateResult[2];
         var endDateResult = regex.exec(endDate);
-        var endYear = endDateResult[1];
-        var endMonth = endDateResult[2];
-        var endDay = endDateResult[3];
+        var endYear = endDateResult[3];
+        var endMonth = endDateResult[1];
+        var endDay = endDateResult[2];
         var regex2 = /(.*):(.*)/;
         var startTimeResult = regex2.exec(startTime);
         var startHour = startTimeResult[1];
@@ -1052,8 +1066,8 @@ var G_AMOUNTOFPRESETS = 100;
             }
         }
         var directionalCursors = $("#wmech_settingdircsdircur").is(":checked");
-        $("#closure_direction").parent().prev().after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
-            "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
+        $("#closure_direction").after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
+        "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
             "<div id='wmech_dBTW' class='wmech_closureButton wmech_dirbutton'>Two way (⇆)</div>");
         var permDir = "";
         if ($(".heading").length > 0 && numOfSegsSelected() <= 1) {
@@ -1078,12 +1092,21 @@ var G_AMOUNTOFPRESETS = 100;
         }
         $("#wmech_dBAB").click(function() {
             $("#closure_direction").val("1").change();
+            $("#wmech_dBAB").css('background-color', '#26bae8');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBBA").click(function() {
             $("#closure_direction").val("2").change();
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#26bae8');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBTW").click(function() {
             $("#closure_direction").val("3").change();
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#26bae8');
         });
         if (segDir == 1) {
             // Segment direction is A --> B
@@ -1122,27 +1145,34 @@ var G_AMOUNTOFPRESETS = 100;
             '<span id="wmech_lEB2h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+2h</span>',
             '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d</span>',
             '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w</span>',
-            '<span id="wmech_lEB1o" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1o</span>',
+            '<span id="wmech_lEB1mo" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1mo</span>',
+            '<span id="wmech_lEBcustomMin" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffffff;">custom</span>',
         ].join("\n");
         $("#wmech_closurelengthval").after("<div id='wmech_timeExtenderDiv'></div>");
         $("#wmech_timeExtenderDiv").append($html);
+        if (customCSmin == "") {
+            $("#wmech_lEBcustomMin").css('visibility', 'hidden');
+        } else {
+        $("#wmech_lEBcustomMin").text(customCSmin + "m");
+        }
         $("#wmech_lEB1m").click(function() { addToEndStartDate(0, 0, 1); });
         $("#wmech_lEB15m").click(function() { addToEndStartDate(0, 0, 15); });
         $("#wmech_lEB1h").click(function() { addToEndStartDate(0, 0, 60); });
         $("#wmech_lEB2h").click(function() { addToEndStartDate(0, 0, 120); });
         $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
         $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
-        $("#wmech_lEB1o").click(function() { addToEndStartDate(1, 0, 0); });
+        $("#wmech_lEB1mo").click(function() { addToEndStartDate(1, 0, 0); });
+        $("#wmech_lEBcustomMin").click(function() { addToEndStartDate(0, 0, customCSmin); });
     }
 
     function addToEndStartDate(o, d, m, type = "end") {
         var endDate = $("#closure_" + type + "Date").val();
         var endTime = $("#closure_" + type + "Time").val();
-        var regex = /(.*)-(.*)-(.*)/;
+        var regex = /(.*)\/(.*)\/(.*)/;
         var endDateResult = regex.exec(endDate);
-        var endYear = endDateResult[1];
-        var endMonth = endDateResult[2];
-        var endDay = endDateResult[3];
+        var endYear = endDateResult[3];
+        var endMonth = endDateResult[1];
+        var endDay = endDateResult[2];
         var regex2 = /(.*):(.*)/;
         var endTimeResult = regex2.exec(endTime);
         var endHour = endTimeResult[1];
@@ -1151,7 +1181,7 @@ var G_AMOUNTOFPRESETS = 100;
         res.setTime(res.getTime() + (m * 60 * 1000));
         res.setDate(res.getDate() + d);
         res.setMonth(res.getMonth() + o);
-        var finalDate = res.getFullYear() + "-" + formatTimeProp(parseInt(res.getMonth()) + 1) + "-" + formatTimeProp(res.getDate());
+        var finalDate = formatTimeProp(parseInt(res.getMonth()) + 1) + "/" + formatTimeProp(res.getDate()) + "/" + res.getFullYear();
         var finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
         $("#closure_" + type + "Date").val(finalDate).change();
         $("#closure_" + type + "Time").val(finalTime).change();
@@ -1162,7 +1192,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addNodeClosureButtons() {
-        $("label:contains('Closure nodes')").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
+       $(".closure-nodes.form-group > wz-label.hydrated").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
             "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
             "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
             "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
@@ -1175,22 +1205,38 @@ var G_AMOUNTOFPRESETS = 100;
 
     function toggleNoNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", false, colorize);
-    }
+        $("#wmech_nCBNone").css('background-color', '#26bae8');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
+         }
 
     function toggleAllNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#26bae8');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
     }
 
     function toggleMiddleNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
         panelToggleNodes(".fromNodeClosed:first", false, colorize);
         panelToggleNodes(".fromNodeClosed:last", false, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#26bae8');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
     }
 
     function toggleEndsNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", false, colorize);
         panelToggleNodes(".fromNodeClosed:first", true, colorize);
         panelToggleNodes(".fromNodeClosed:last", true, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#26bae8');
     }
 
     function panelToggleNodes(selector, setting, colorize = false) {
@@ -1206,7 +1252,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function colorizeRow(elem) {
-        var root = elem.shadowRoot;
+        var root = elem.shadow-root;
         $(root).find(".wz-slider").css("background-color", "rgb(63, 188, 113)");
         $(elem).parent().parent().css("background-color", "rgba(63, 188, 113, 0.4)");
         $(elem).one("click", function() {
@@ -1215,7 +1261,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function uncolorizeRow(button) {
-        var root = button.shadowRoot;
+        var root = button.shadow-root;
         $(root).find(".wz-slider").css("background-color", "");
         $(button).parent().parent().css("background-color", "rgb(242, 244, 247);");
     }
@@ -1224,7 +1270,7 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_eventId").parent().css("height", 0).css("overflow", "hidden");
         $("#closure_eventId").removeAttr("required");
         $(".mte-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
-        var to = $("#closure_eventId").children().length;
+        var to = $("#closure_eventId").children().length - 1;
         for (var i = 0; i < to; i++) {
             var labelText = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").text();
             var labelVal = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").val();
@@ -1291,7 +1337,7 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmechCTOpen { background-color: #82b57f; color: white; } ",
             ".wmechCTExtend { background-color: #ffdc00; } ",
             ".wmechCTSubmitPL { background-color: #82b57f; color: white; border-radius: 5px;} ",
-            ".wmech_closureButton { text-align: center; font-family: 'Rubik', 'Boing-light', sans-serif; font-weight: 700; border: 1px solid gray; background-color: #ddd; color: black; border-radius: 5px; font-size: 11px; text-transform: uppercase; cursor: pointer;} ",
+            ".wmech_closureButton { text-align: center; font-family: 'Rubik', 'Boing-light', sans-serif; font-weight: 700; border: 1px solid gray; background-color: #ddd; color: black; border-radius: 5px; font-size: 11px; cursor: pointer;} ",
             ".wmech_nodeClosureButton { display: inline-block; width: 23%; margin: 1%;  }",
             ".wmech_dirbutton { width: 100%; margin: 0.3em 0; }",
             ".wmech_buttonNotAllowed { background: lightgray; color: gray; cursor: not-allowed; }",
@@ -1337,9 +1383,9 @@ var G_AMOUNTOFPRESETS = 100;
             }, 50);
         }
         var nodeClosuresOption = $("#wmech_preset" + (ruleIndex + 1) + "nodes").val();
-        if (nodeClosuresOption == "None") {
+        if (nodeClosuresOption == "Middle") {
             setTimeout(function() {
-                toggleNoNodes(true);
+                toggleMiddleNodes(true);
             }, 50);
         }
         if (nodeClosuresOption == "All") {
@@ -1347,14 +1393,14 @@ var G_AMOUNTOFPRESETS = 100;
                 toggleAllNodes(true);
             }, 50);
         }
-        if (nodeClosuresOption == "Middle") {
-            setTimeout(function() {
-                toggleMiddleNodes(true);
-            }, 50);
-        }
         if (nodeClosuresOption == "Ends") {
             setTimeout(function() {
                 toggleEndsNodes(true);
+            }, 50);
+        }
+                if (nodeClosuresOption == "None") {
+            setTimeout(function() {
+                toggleNoNodes(true);
             }, 50);
         }
         setTimeout(function() {
@@ -1411,6 +1457,12 @@ var G_AMOUNTOFPRESETS = 100;
         var selectedSegs = W.selectionManager.getSegmentSelection().segments;
         var firstSelectedSegName = W.model.streets.getObjectById(selectedSegs[0].attributes.primaryStreetID).name;
         var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).name;
+        if (firstSelectedSegName == null) {
+            firstSelectedSegName = "";
+        }
+        if (lastSelectedSegName == null) {
+            lastSelectedSegName = "";
+        }
         finalString = finalString.replace("{{firstSegName}}", firstSelectedSegName).replace("{{lastSegName}}", lastSelectedSegName);
 
         // RegEx
@@ -1629,7 +1681,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function assembleYear(parts) {
         // parts[0] is yr, parts[1] is mon, parts[2] is day
-        return parts[0] + "-" + addZero(parts[1]) + "-" + addZero(parts[2]);
+        return addZero(parts[1]) + "/" + addZero(parts[2]) + "/" + parts[0];
     }
 
     function assembleTime(parts) {
