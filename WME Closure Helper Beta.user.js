@@ -3,7 +3,7 @@
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
 // @version      ß 2021.05.23.01
 // @description  A script to help out with WME closure efforts! :D
-// @author       fourLoop
+// @author       fourLoop & jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // ==/UserScript==
