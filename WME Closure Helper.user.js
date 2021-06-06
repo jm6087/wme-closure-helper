@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2021.05.23.00
+// @version      2021.06.06.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -601,7 +601,10 @@ var G_AMOUNTOFPRESETS = 100;
         });
 
         // Add select all closures checkbox
-        if ($(".closure-item").length) {
+//         if ($("#wmech_selectAllDiv").length > 0) {
+//             let cccc = $("#wmech_selectAllDiv").length;
+
+        if ($(".closure-item").length > 1) {
             var holderDiv = $("<div />", { id: "wmech_selectAllDiv" }).css("margin-bottom", "4px");
             holderDiv.append(
                 $("<input />", { type: "checkbox", id: "wmech_selectAllCheckbox" }).click(function() {
@@ -611,6 +614,7 @@ var G_AMOUNTOFPRESETS = 100;
             holderDiv.append($("<p />", { id: "wmech_selectAllText" }).text("Select all closures"));
             $(".full-closures").prepend(holderDiv);
         }
+//        }
     }
 
     function toggleBulkButtons() {
@@ -855,11 +859,12 @@ var G_AMOUNTOFPRESETS = 100;
                     var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
                 }
                 if (diff != 0) {
-                    $(".form-group:nth-of-type(3)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
+                    $("#segment-edit-closures > div > div > div > form > div:nth-child(3)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
                 }
             });
         }
     }
+
 
     function addPanelWatcher() {
         $("li.closure-item, .add-closure-button").off();
@@ -1092,12 +1097,21 @@ function addClosureLengthValue() {
         }
         $("#wmech_dBAB").click(function() {
             $("#closure_direction").val("1").change();
+            $("#wmech_dBAB").css('background-color', '#26bae8');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBBA").click(function() {
             $("#closure_direction").val("2").change();
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#26bae8');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBTW").click(function() {
             $("#closure_direction").val("3").change();
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#26bae8');
         });
         if (segDir == 1) {
             // Segment direction is A --> B
@@ -1142,7 +1156,7 @@ function addClosureLengthValue() {
         $("#wmech_closurelengthval").after("<div id='wmech_timeExtenderDiv'></div>");
         $("#wmech_timeExtenderDiv").append($html);
         if (customCSmin == "") {
-            $("#wmech_lEBcustomMin").text("");
+            $("#wmech_lEBcustomMin").css('visibility', 'hidden');
         } else {
         $("#wmech_lEBcustomMin").text(customCSmin + "m");
         }
@@ -1196,22 +1210,38 @@ function addClosureLengthValue() {
 
     function toggleNoNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", false, colorize);
+        $("#wmech_nCBNone").css('background-color', '#26bae8');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
          }
 
     function toggleAllNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#26bae8');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
     }
 
     function toggleMiddleNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
         panelToggleNodes(".fromNodeClosed:first", false, colorize);
         panelToggleNodes(".fromNodeClosed:last", false, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#26bae8');
+        $("#wmech_nCBEnds").css('background-color', '#ddd');
     }
 
     function toggleEndsNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", false, colorize);
         panelToggleNodes(".fromNodeClosed:first", true, colorize);
         panelToggleNodes(".fromNodeClosed:last", true, colorize);
+        $("#wmech_nCBNone").css('background-color', '#ddd');
+        $("#wmech_nCBAll").css('background-color', '#ddd');
+        $("#wmech_nCBMiddle").css('background-color', '#ddd');
+        $("#wmech_nCBEnds").css('background-color', '#26bae8');
     }
 
     function panelToggleNodes(selector, setting, colorize = false) {
@@ -1333,7 +1363,7 @@ function addClosureLengthValue() {
             "#wmech_selectAllText { font-weight: bold; margin-left: 4px; display: inline }",
             ".wmech_settingsheader { font-weight: bold; margin-bottom: 0 !important; }",
             ".wmech_timezonewarnmessage { text-align: center }",
-            ".wmech_timezonewarnmessage span { font-weight: bold; color: #823700; }",
+            ".wmech_timezonewarnmessage span { font-weight: bold; color: black; background-color: red }",
             ".wmech_settingsinput { text-align: center; width: 100%; }"
         ].join('\n\n'));
     }
