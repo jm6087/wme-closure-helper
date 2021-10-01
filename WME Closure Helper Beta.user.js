@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2021.06.06.01
+// @version      ß 2021.10.01.03
 // @description  A script to help out with WME closure efforts! :D
-// @author       fourLoop & jm6087
+// @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // ==/UserScript==
@@ -127,7 +127,7 @@ var G_AMOUNTOFPRESETS = 100;
         addSettingsInput("timezonedb.com/api Personal Key", "wmech_settingtimezoneapi");
         addSettingsHeader("Custom Minutes - Enter number of minutes (numbers only)");
         addSettingsInput("Custom time clicksaver - Enter number of minutes", "wmech_settingcustomcs");
-//         addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
+        //         addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
         $("#wmech_settingtimezonewarn").change(function() {
             if (!this.checked) {
                 $("#wmech_settingtimezoneapi").prop('disabled', true);
@@ -456,7 +456,7 @@ var G_AMOUNTOFPRESETS = 100;
             var color = $(".wmech_colorinput").eq(presetCount - 1).val();
             var textColor = getTextContrastColor(color);
             if (nameInput) {
-                 $("#wmech-container").append(
+                $("#wmech-container").append(
                     $('<button>', {
                         id: ('wmechButton' + presetCount),
                         class: 'wmech_closurebutton',
@@ -486,8 +486,8 @@ var G_AMOUNTOFPRESETS = 100;
         $(".dates").css("margin-left", "10px");
         $(".closure-title").css("padding", "0").css("min-height", "19px");
         $(".buttons").css("top", "0px");
-//        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
-//        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
+        //        $("#sidebar .tab-content").css("overflow", "visible").css("overflow-x", "visibile");
+        //        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
     }
 
     function addEnhancedClosureHistory() {
@@ -601,8 +601,8 @@ var G_AMOUNTOFPRESETS = 100;
         });
 
         // Add select all closures checkbox
-//         if ($("#wmech_selectAllDiv").length > 0) {
-//             let cccc = $("#wmech_selectAllDiv").length;
+        //         if ($("#wmech_selectAllDiv").length > 0) {
+        //             let cccc = $("#wmech_selectAllDiv").length;
 
         if ($(".closure-item").length > 1) {
             var holderDiv = $("<div />", { id: "wmech_selectAllDiv" }).css("margin-bottom", "4px");
@@ -614,7 +614,7 @@ var G_AMOUNTOFPRESETS = 100;
             holderDiv.append($("<p />", { id: "wmech_selectAllText" }).text("Select all closures"));
             $(".full-closures").prepend(holderDiv);
         }
-//        }
+        //        }
     }
 
     function toggleBulkButtons() {
@@ -824,8 +824,37 @@ var G_AMOUNTOFPRESETS = 100;
             e.stopImmediatePropagation();
         });
 
+        //            var _confirm = window.confirm;
+        //    window.confirm = function(msg)
+        //    {
+        //       var cm_delete_confirm = I18n.lookup("closures.delete_confirm").split('"')[0].trimRight(1);
+
+        //       if(msg.indexOf(cm_delete_confirm) != -1)
+        //       {
+        //          uroAddLog('intercepted closure delete confirmation...');
+        //          if(uroConfirmClosureDelete)
+        //          {
+        //             return _confirm(msg);
+        //          }
+        //          else
+        //          {
+        //             return true;
+        //          }
+        //       }
+        //       else if(typeof(msg) == 'undefined')
+        //       {
+        //          uroAddLog('Intercepted blank confirmation...');
+        //          return true;
+        //       }
+        //       else
+        //       {
+        //          return _confirm(msg);
+        //       }
+        //    };
         // Override window.confirm
-        //var oldConfirm = window.confirm;
+        var _confirm = window.confirm;
+        var oldConfirm = window.confirm;
+        var msg = "Delete Closure?";
         window.confirm = function(msg) {
             log(msg);
             if (msg.indexOf("Delete closure") != -1) {
@@ -855,9 +884,9 @@ var G_AMOUNTOFPRESETS = 100;
                 var timeZone = res.abbreviation;
                 if (diff < 0) {
                     var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind."
-                } else {
-                    var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
-                }
+                    } else {
+                        var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
+                        }
                 if (diff != 0) {
                     $("#segment-edit-closures > div > div > div > form > div:nth-child(3)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
                 }
@@ -879,12 +908,12 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(removeClosureLines, 5);
             setTimeout(timeZoneCompare, 5);
             setTimeout(function() {
-             $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button.hydrated').click(function() {
-                 $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button').off();
-                 $('#segment-edit-closures [class^="wmech"]').remove();
-                 $('#segment-edit-closures [id^="wmech"]').remove();
-                 setTimeout(function() { setup(); }, 50);
-             })
+                $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button.hydrated').click(function() {
+                    $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button').off();
+                    $('#segment-edit-closures [class^="wmech"]').remove();
+                    $('#segment-edit-closures [id^="wmech"]').remove();
+                    setTimeout(function() { setup(); }, 50);
+                })
             }, 20);
         });
         formatClosureList();
@@ -941,10 +970,10 @@ var G_AMOUNTOFPRESETS = 100;
         var numOfSegs = numOfSegsSelected();
         var segLabel = numOfSegs + " segs (" + segsLength + ")";
         $(".edit-closure form").prepend('<div class="form-group">' +
-            '<span><i class="fa fa-fw fa-chevron-down wmech_seglistchevron"></i></span>' +
-            '<label id="wmech_seginfolabel" class="control-label" for="closure_reason" style="margin-bottom: 0;">Segments</label>' +
-            '<label id="wmech_seginfolabel" class="control-label" style="font-weight: normal;">' + segLabel + '</label>' +
-            '<div class="controls"><ul id="wmech_seginfonames">' + '</ul></div></div>');
+                                        '<span><i class="fa fa-fw fa-chevron-down wmech_seglistchevron"></i></span>' +
+                                        '<label id="wmech_seginfolabel" class="control-label" for="closure_reason" style="margin-bottom: 0;">Segments</label>' +
+                                        '<label id="wmech_seginfolabel" class="control-label" style="font-weight: normal;">' + segLabel + '</label>' +
+                                        '<div class="controls"><ul id="wmech_seginfonames">' + '</ul></div></div>');
         $(".edit-closure form .form-group").first().click(collapseSegList);
         if ($("#wmech_settingseglistcollapse").prop("checked")) {
             collapseSegList();
@@ -960,20 +989,20 @@ var G_AMOUNTOFPRESETS = 100;
         $(".wmech_seglistchevron").toggleClass("fa-chevron-down fa-chevron-up");
     }
 
-function addClosureLengthValue() {
+    function addClosureLengthValue() {
         $(".form-group.end-date-form-group").after('<div class="form-group">' +
-            '<label class="control-label" for="closure_reason">Closure Length</label>' +
-            '<div class="controls" style="text-align: center;">' +
-            '<span id="wmech_closurelengthval"></span>' +
-            '</div></div>');
+                                                   '<label class="control-label" for="closure_reason">Closure Length</label>' +
+                                                   '<div class="controls" style="text-align: center;">' +
+                                                   '<span id="wmech_closurelengthval"></span>' +
+                                                   '</div></div>');
         $("#wmech_closurelengthval").text(closureLength());
         $("#closure_startDate, " +
-            "#closure_startTime, " +
-            "#closure_endDate, " +
-            "#closure_endTime").on('change paste keyup input', function() {
+          "#closure_startTime, " +
+          "#closure_endDate, " +
+          "#closure_endTime").on('change paste keyup input', function() {
             $("#wmech_closurelengthval").text(closureLength());
         });
-}
+    }
 
     function closureLength() {
         var startDate = $("#closure_startDate").val();
@@ -1072,8 +1101,8 @@ function addClosureLengthValue() {
         }
         var directionalCursors = $("#wmech_settingdircsdircur").is(":checked");
         $("#closure_direction").after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
-        "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
-            "<div id='wmech_dBTW' class='wmech_closureButton wmech_dirbutton'>Two way (⇆)</div>");
+                                      "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
+                                      "<div id='wmech_dBTW' class='wmech_closureButton wmech_dirbutton'>Two way (⇆)</div>");
         var permDir = "";
         if ($(".heading").length > 0 && numOfSegsSelected() <= 1) {
             if ($(".letter-circle:eq(0)").text() == "A") {
@@ -1158,7 +1187,7 @@ function addClosureLengthValue() {
         if (customCSmin == "") {
             $("#wmech_lEBcustomMin").css('visibility', 'hidden');
         } else {
-        $("#wmech_lEBcustomMin").text(customCSmin + "m");
+            $("#wmech_lEBcustomMin").text(customCSmin + "m");
         }
         $("#wmech_lEB1m").click(function() { addToEndStartDate(0, 0, 1); });
         $("#wmech_lEB15m").click(function() { addToEndStartDate(0, 0, 15); });
@@ -1171,6 +1200,7 @@ function addClosureLengthValue() {
     }
 
     function addToEndStartDate(o, d, m, type = "end") {
+        var LY;
         var endDate = $("#closure_" + type + "Date").val();
         var endTime = $("#closure_" + type + "Time").val();
         var regex = /(.*)\/(.*)\/(.*)/;
@@ -1178,11 +1208,53 @@ function addClosureLengthValue() {
         var endYear = endDateResult[3];
         var endMonth = endDateResult[1];
         var endDay = endDateResult[2];
+        // fix for last day of month and adding 1 month with clicksaver to ensure it is actually last day of following month.
+        if (endYear == "2024" || endYear == "2028" || endYear == "2032" || endYear == "2036" || endYear == "2040" || endYear == "2044" || endYear == "2048") LY = "yes";
+        if (o == 1){
+            if (endMonth == "04" || endMonth == "06" || endMonth == "07" || endMonth == "09" || endMonth == "11" || endMonth == "12"){
+                if (endDay == "30"){
+                    o = 0;
+                    d = 31;
+                }
+            }else{
+                if (endMonth == "03" || endMonth == "05" || endMonth == "08" || endMonth == "10"){
+                    if (endDay == "31"){
+                        o = 0;
+                        d = 30;
+                    }
+                }else{
+                    if (endMonth == "02" && endDay > "27"){
+                        o = 0;
+                        if (LY == "yes"){
+                            d = 31;
+                        }else{
+                            d = 30;
+                        }
+                    }else{
+                        if (endMonth == "01" && endDay > "27"){
+                            o = 0;
+                            if (LY == "yes"){
+                                d = 31 - (endDay - 29);
+                            }else{
+                                d = 31 - (endDay - 28);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         var regex2 = /(.*):(.*)/;
         var endTimeResult = regex2.exec(endTime);
         var endHour = endTimeResult[1];
         var endMin = endTimeResult[2];
         var res = new Date(endYear, parseInt(endMonth) - 1, endDay, endHour, endMin, 0, 0);
+        var x1 = res.getDate();
+        var x2 = res.getMonth();
+        var x3 = res.getDate() + 1;
+        var x5 = res.getDate() + d;
+        var x6 = res.getDate();
+        var x4 = res.getMonth() + o;
         res.setTime(res.getTime() + (m * 60 * 1000));
         res.setDate(res.getDate() + d);
         res.setMonth(res.getMonth() + o);
@@ -1197,10 +1269,10 @@ function addClosureLengthValue() {
     }
 
     function addNodeClosureButtons() {
-       $(".closure-nodes.form-group > wz-label.hydrated").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
-            "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
-            "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
-            "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
+        $(".closure-nodes.form-group > wz-label.hydrated").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
+                                                                 "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
+                                                                 "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
+                                                                 "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
         $(".wmech_nodeClosureButton").unbind();
         $("#wmech_nCBNone").click(toggleNoNodes);
         $("#wmech_nCBAll").click(toggleAllNodes);
@@ -1214,7 +1286,7 @@ function addClosureLengthValue() {
         $("#wmech_nCBAll").css('background-color', '#ddd');
         $("#wmech_nCBMiddle").css('background-color', '#ddd');
         $("#wmech_nCBEnds").css('background-color', '#ddd');
-         }
+    }
 
     function toggleAllNodes(colorize = false) {
         panelToggleNodes(".fromNodeClosed", true, colorize);
@@ -1403,7 +1475,7 @@ function addClosureLengthValue() {
                 toggleEndsNodes(true);
             }, 50);
         }
-                if (nodeClosuresOption == "None") {
+        if (nodeClosuresOption == "None") {
             setTimeout(function() {
                 toggleNoNodes(true);
             }, 50);
