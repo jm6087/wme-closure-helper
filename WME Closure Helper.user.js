@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         WME Closure Helper - Beta
+// @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2021.10.01.01
+// @version      2021.10.01.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
