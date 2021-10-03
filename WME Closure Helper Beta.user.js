@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2021.10.02.02
+// @version      ß 2021.10.02.03
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -24,7 +24,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     var customCSmin;
     var settings = {};
-    var DateFormat;
+    var DateFormat = "";
     let Lang;
     var dateSeparator;
 
@@ -41,30 +41,47 @@ var G_AMOUNTOFPRESETS = 100;
 
     function init() {
         Lang = I18n.currentLocale()
-        if (Lang == "en-US" || Lang == "en" || Lang == "no" || Lang == "zh"){
+        let lang_mmddyyyy = ["en-US", "en", "no", "zh"]; // mm/dd/yyyy
+        let lang_ddmmyyyy = ["es-419", "es", "en-GB", "en-AU", "af", "ca", "el", "fr", "gl", "id", "it", "ms", "pt-BR", "pt-PT", "th"]; // dd/mm/yyyy
+        let lang_ddmmyyyy2 = ["bg", "cs", "da", "de", "et", "fi", "hr", "lv", "pl", "ro", "ru", "sk", "sl", "tr", "uk"]; // dd.mm.yyyy
+        let lang_yyyymmdd = ["eu", "lt", "sv"]; // yyyy-mm-dd
+        let lang_ddmmyyyy3 = ["nl"]; // dd-mm-yyyy
+        let lang_yyyymmdd2 = ["zh-TW"]; // yyyy/mm/dd
+        let lang_yyyymmdd3 = ["hu"]; // yyyy.mm.dd
+        if (lang_mmddyyyy.indexOf(Lang) != -1) {
             DateFormat = "mmddyyyy";
             dateSeparator = "/";
-        }else{
-            if (Lang == "es-419" || Lang == "es" || Lang == "en-GB" || Lang == "en-AU" || Lang == "af" || Lang == "ca" || Lang == "el" || Lang == "fr" || Lang == "gl" || Lang == "id" || Lang == "it" || Lang == "ms" || Lang == "pt-BR" || Lang == "pt-PT" || Lang == "th"){
-                DateFormat = "ddmmyyyy";
-                dateSeparator = "/";
-            }else{
-                if (Lang == "bg" || Lang == "cs" || Lang == "da" || Lang == "de" || Lang == "et" || Lang == "fi" || Lang == "hr" || Lang == "lv" || Lang == "pl" || Lang == "ro" || Lang == "ru" || Lang == "sk" || Lang == "sl" || Lang == "tr" || Lang == "uk"){
-                    DateFormat = "ddmmyyyy";
-                    dateSeparator = ".";
-                }else{
-                    if (Lang == "eu" || Lang == "lt" || Lang == "sv"){
-                        DateFormat = "yyyymmdd";
-                        dateSeparator = "-";
-                    }else{
-                        DateFormat = "mmddyyyy";
-                        dateSeparator = "/";
-                    }}}}
-        // Other formats
-        //"yyyy-mm-dd" - Euskara - eu / Lietuvių - lt / Svenska - sv
-        //"yyyy.mm.dd." - Magyar - hu -  note: period at end
-        //"dd-mm-yyyy" - Nederlands - nl
-        //"yyyy/mm/dd" - 中文 (繁體）- zh-TW (last one on the list)
+        }
+        if (lang_ddmmyyyy.indexOf(Lang) != -1) {
+            DateFormat = "ddmmyyyy";
+            dateSeparator = "/";
+        }
+        if (lang_ddmmyyyy2.indexOf(Lang) != -1){
+            DateFormat = "ddmmyyyy";
+            dateSeparator = ".";
+        }
+        if (lang_yyyymmdd.indexOf(Lang) != -1){
+            DateFormat = "yyyymmdd";
+            dateSeparator = "-";
+        }
+        if (lang_ddmmyyyy3.indexOf(Lang) != -1){
+            DateFormat = "ddmmyyyy"
+            dateSeparator = "-";
+        }
+        if (lang_yyyymmdd2.indexOf(Lang) != -1){
+            DateFormat = "yyyymmdd"
+            dateSeparator = "/";
+        }
+        if (lang_yyyymmdd3.indexOf(Lang) != -1){
+            DateFormat = "yyyymmdd"
+            dateSeparator = ".";
+//        dateseparator2 = ".";
+         }
+        if (DateFormat == ""){
+            DateFormat = "mmddyyyy";
+            dateSeparator = "/";
+        }
+
         var $section = $("<div>");
         var formString = '';
         var preset = 0;
@@ -1037,7 +1054,8 @@ var G_AMOUNTOFPRESETS = 100;
         var startTime = $("#closure_startTime").val();
         var endDate = $("#closure_endDate").val();
         var endTime = $("#closure_endTime").val();
-        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
+//        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
+        var regex = /(\d*)(\-|\.|\/)(\d*)(\-|\.|\/)(\d*)(.*)/;
         var startDateResult = regex.exec(startDate);
         var endDateResult = regex.exec(endDate);
         if (DateFormat == "ddmmyyyy"){
@@ -1249,7 +1267,8 @@ var G_AMOUNTOFPRESETS = 100;
         var endDate = $("#closure_" + type + "Date").val();
         var endTime = $("#closure_" + type + "Time").val();
         //            var regex = /(.*)\/(.*)\/(.*)/;
-        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
+//        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
+        var regex = /(\d*)(\-|\.|\/)(\d*)(\-|\.|\/)(\d*)(.*)/;
         var endDateResult = regex.exec(endDate);
         if (DateFormat == "ddmmyyyy"){
             var endYear = endDateResult[5];
@@ -1309,9 +1328,6 @@ var G_AMOUNTOFPRESETS = 100;
         res.setTime(res.getTime() + (m * 60 * 1000));
         res.setDate(res.getDate() + d);
         res.setMonth(res.getMonth() + o);
-        var x1 = res.getFullYear()
-        var x2 = res.getMonth()
-        var x3 = res.getDate()
         if (DateFormat == "ddmmyyyy"){
             var finalDate = formatTimeProp(formatTimeProp(res.getDate())) + dateSeparator + (parseInt(res.getMonth()) + 1) + dateSeparator + res.getFullYear();
         }else{
