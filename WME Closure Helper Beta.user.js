@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2021.10.02.03
+// @version      ß 2022.08.09.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -402,8 +402,10 @@ var G_AMOUNTOFPRESETS = 100;
             for (var key in settingsInputs) {
                 $("#wmech_setting" + key).val(settingsInputs[key]);
             }
+            if (settings.settingsInputs.hasOwnProperty('customcs')) {
+                customCSmin = settings.settingsInputs.customcs;
+            }
         }
-        customCSmin = settings.settingsInputs.customcs;
         initCSS();
         loadDropdown();
     }
@@ -445,9 +447,8 @@ var G_AMOUNTOFPRESETS = 100;
                 var addedNode = mutation.addedNodes[i];
 
                 // Only fire up if it's a node
-                if (addedNode.nodeType === Node.ELEMENT_NODE) {
-                    var closuresPanel = addedNode.querySelector('#segment-edit-closures');
-
+                if (addedNode.nodeType === Node.ELEMENT_NODE && addedNode.className=='segment-feature-editor') {
+                    var closuresPanel = addedNode.querySelector('.closures');
                     if (closuresPanel) {
                         setup();
                     }
@@ -459,9 +460,9 @@ var G_AMOUNTOFPRESETS = 100;
     function attachObserver() {
         log("Observing...");
         WazeWrap.Events.unregister("selectionchanged", null, attachObserver);
-        if (document.querySelector(".closures-list")) {
-            observer.observe(document.getElementById('edit-panel'), { childList: true, subtree: true });
-            setup();
+        if (document.querySelector("#edit-panel")) {
+            observer.observe(document.querySelector("#edit-panel"), { childList: true, subtree: true });
+            // setup();
         } else {
             WazeWrap.Events.register("selectionchanged", null, attachObserver);
         }
@@ -479,11 +480,13 @@ var G_AMOUNTOFPRESETS = 100;
 
     function addClosureCounter() {
         // TODO In future, make this sorted by active/scheduled
-        $(".closures-tab").text("Road Closures");
         var num = $(".closure-item").length;
-        $(".closures-tab").append(" (" + num + ")");
+        var msg = "Road Closures (" + num.toString() + ")";
+        if ($("#wmech-counter").length == 0)
+            $(".closures-tab").append("<div id='wmech-counter'></div>");
+        $("#wmech-counter").text(msg);
         setTimeout(function() {
-            if ($("#segment-edit-closures").hasClass("active")) {
+            if ($(".closure-list").hasClass("active")) {
                 addClosureCounter();
             }
         }, 1000);
@@ -493,7 +496,7 @@ var G_AMOUNTOFPRESETS = 100;
         var tmpButtonClicks = 0;
         var first = null;
         //alert("Appending node.");
-        $("#segment-edit-closures .closures-list").append("<div id='wmech-container' style='margin-top: 10px;'></div>");
+        $(".closures-list").append("<div id='wmech-container' style='margin-top: 10px;'></div>");
         var presetCount = 1;
         for (presetCount = 1; presetCount < G_AMOUNTOFPRESETS; presetCount++) {
             var nameInput = $("#wmech_preset" + presetCount + "name").val();
@@ -684,7 +687,7 @@ var G_AMOUNTOFPRESETS = 100;
         $buttonDiv.append($deleteAllButton);
         $buttonDiv.append($cloneButton);
         // $buttonDiv.append($propertiesButton);
-        $("#segment-edit-closures").prepend($buttonDiv);
+        $(".closures-list").prepend($buttonDiv);
         $buttonDiv.hide();
         $("#wmech_bulkX").click(function() {
             hideBulkButtons();
@@ -933,7 +936,7 @@ var G_AMOUNTOFPRESETS = 100;
                         var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
                         }
                 if (diff != 0) {
-                    $("#segment-edit-closures > div > div > div > form > div:nth-child(3)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
+                    $(".edit-closure > form > div:nth-child(4)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
                 }
             });
         }
@@ -953,10 +956,10 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(removeClosureLines, 5);
             setTimeout(timeZoneCompare, 5);
             setTimeout(function() {
-                $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button.hydrated').click(function() {
-                    $('#segment-edit-closures > div > div > div > form > div.action-buttons > wz-button.cancel-button').off();
-                    $('#segment-edit-closures [class^="wmech"]').remove();
-                    $('#segment-edit-closures [id^="wmech"]').remove();
+                $('.edit-closure > form > div.action-buttons > wz-button.cancel-button').click(function() {
+                    $('.edit-closure > form > div.action-buttons > wz-button.cancel-button').off();
+                    $('.edit-closure [class^="wmech"]').remove();
+                    $('.edit-closure [id^="wmech"]').remove();
                     setTimeout(function() { setup(); }, 50);
                 })
             }, 20);
@@ -1346,7 +1349,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addNodeClosureButtons() {
-        $(".closure-nodes.form-group > wz-label.hydrated").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
+        $(".closure-nodes.form-group > wz-label").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
                                                                  "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
                                                                  "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
                                                                  "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
@@ -1406,7 +1409,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function colorizeRow(elem) {
-        var root = elem.shadow-root;
+        var root = elem; //.shadow-root;
         $(root).find(".wz-slider").css("background-color", "rgb(63, 188, 113)");
         $(elem).parent().parent().css("background-color", "rgba(63, 188, 113, 0.4)");
         $(elem).one("click", function() {
@@ -1415,7 +1418,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function uncolorizeRow(button) {
-        var root = button.shadow-root;
+        var root = button; // .shadow-root;
         $(root).find(".wz-slider").css("background-color", "");
         $(button).parent().parent().css("background-color", "rgb(242, 244, 247);");
     }
@@ -1423,7 +1426,7 @@ var G_AMOUNTOFPRESETS = 100;
     function addMTERadios() {
         $("#closure_eventId").parent().css("height", 0).css("overflow", "hidden");
         $("#closure_eventId").removeAttr("required");
-        $(".mte-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
+        $(".label-with-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
         var to = $("#closure_eventId").children().length - 1;
         for (var i = 0; i < to; i++) {
             var labelText = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").text();
@@ -1562,7 +1565,7 @@ var G_AMOUNTOFPRESETS = 100;
             $("#closure_endDate").css("background-color", "rgba(63, 188, 113, 0.5)");
             $("#closure_endTime").css("background-color", "rgba(63, 188, 113, 0.5)");
             if (permClosures) {
-                $("#segment-edit-closures > div.closures > div > div > form > div.checkbox.controls-container > label").css("color", "rgba(63, 188, 113, 1)");
+                $(".edit-closure > form > div > #closure_permanent").css("color", "rgba(63, 188, 113, 1)");
             }
         }, 20);
         var direction = $("#wmech_preset" + (ruleIndex + 1) + "direction").val();
