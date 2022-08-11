@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2022.08.09.00
+// @version      ß 2022.08.10.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -636,13 +636,17 @@ var G_AMOUNTOFPRESETS = 100;
 
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
         makeBulkButtons();
-        $("li.closure-item").css("display", "flex").css("margin-bottom", "5px");
-        $("li.closure-item").wrapInner("<div style='margin-left: 4px; width: 90%;'></div>");
         var $checkboxDiv = $("<div />");
         var $checkbox = $("<input />", { type: "checkbox", "class": "wmech_bulkCheckbox" }).css("height", "100%").css("margin-top", "0");
         $checkboxDiv.css("vertical-align", "middle").css("position", "relative").css("margin-left", "4px");
         $checkboxDiv.append($checkbox);
-        $("li.closure-item").prepend($checkboxDiv);
+        $("li.closure-item").each(function() {
+            if ($( this ).find(".wmech_bulkCheckbox").length == 0) {
+                $( this ).css("display", "flex").css("margin-bottom", "5px");
+                $( this ).wrapInner("<div style='margin-left: 4px; width: 90%;'></div>");
+                $( this ).prepend($checkboxDiv);
+            }
+        });
         $(":checkbox.wmech_bulkCheckbox").click(function(e) {
             toggleBulkButtons();
             e.stopPropagation();
@@ -1161,7 +1165,7 @@ var G_AMOUNTOFPRESETS = 100;
     function addDirectionCS() {
         var segDir = -1;
         for (var i = 0; i < 4; i++) {
-            if ($("input[value='" + i + "']").is(":checked")) {
+            if ($("wz-option[value='" + i + "']").is(":checked")) {
                 segDir = i;
             }
         }
@@ -1191,19 +1195,19 @@ var G_AMOUNTOFPRESETS = 100;
             }
         }
         $("#wmech_dBAB").click(function() {
-            $("#closure_direction").val("1").change();
+            $("#closure_direction wz-option[value='1']").click();
             $("#wmech_dBAB").css('background-color', '#26bae8');
             $("#wmech_dBBA").css('background-color', '#ddd');
             $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBBA").click(function() {
-            $("#closure_direction").val("2").change();
+            $("#closure_direction wz-option[value='2']").click();
             $("#wmech_dBAB").css('background-color', '#ddd');
             $("#wmech_dBBA").css('background-color', '#26bae8');
             $("#wmech_dBTW").css('background-color', '#ddd');
         });
         $("#wmech_dBTW").click(function() {
-            $("#closure_direction").val("3").change();
+            $("#closure_direction wz-option[value='3']").click();
             $("#wmech_dBAB").css('background-color', '#ddd');
             $("#wmech_dBBA").css('background-color', '#ddd');
             $("#wmech_dBTW").css('background-color', '#26bae8');
@@ -1577,7 +1581,7 @@ var G_AMOUNTOFPRESETS = 100;
         } else if (direction == "B --> A") {
             dirNumber = 2;
         }
-        $("#closure_direction").val(dirNumber).change();
+        $("#closure_direction wz-option[value='" + dirNumber + "']").click();
         var mteRegEx = $("#wmech_preset" + (ruleIndex + 1) + "mteString").val();
         if (mteRegEx.length > 0) {
             var mteFuncResult = matchMTE(mteRegEx);
