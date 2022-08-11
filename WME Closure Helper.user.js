@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2022.08.11.0
+// @version      2022.08.11.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1167,6 +1167,7 @@ var G_AMOUNTOFPRESETS = 100;
         var segDir;
         if (DirLen > 1) {
             segDir = 3
+            $("#closure_direction wz-option[value='3']").click();
         }else{
         segDir = $("#closure_direction").val();
         }
