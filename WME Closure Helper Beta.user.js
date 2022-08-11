@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2022.08.11.02
+// @version      ß 2022.08.11.03
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1218,11 +1218,14 @@ var G_AMOUNTOFPRESETS = 100;
         if (segDir == 1) {
             // Segment direction is A --> B
             $("#wmech_dBBA, #wmech_dBTW").remove();
+            $("#wmech_dBAB").css('background-color', '#26bae8');
         } else if (segDir == 2) {
             // Segment direction is B --> A
             $("#wmech_dBAB, #wmech_dBTW").remove();
+            $("#wmech_dBBA").css('background-color', '#26bae8');
         }
         $("#wmech_dBTW").css("cursor", (directionalCursors ? "pointer" : determineCursorDouble(permDir)));
+        $("#wmech_dBTW").css('background-color', '#26bae8');
     }
 
     function determineCursor(dir) {
