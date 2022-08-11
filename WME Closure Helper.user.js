@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2022.08.11.00
+// @version      2022.08.11.0
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -1163,17 +1163,14 @@ var G_AMOUNTOFPRESETS = 100;
     };
 
     function addDirectionCS() {
-        var DirAtt = W.selectionManager.getSelectedFeatures()[0].model.attributes;
-        var fwdDir = DirAtt.fwdDirection;
-        var revDir = DirAtt.revDirection;
+        var DirLen = W.selectionManager.getSelectedFeatures().length
         var segDir;
-        if (fwdDir && !revDir) {
-            segDir = "AB"
-        } else if (!fwdDir && revDir) {
-            segDir = "BA"
-        } else {
-             segDir = "2W"
-         }
+        if (DirLen > 1) {
+            segDir = 3
+        }else{
+        segDir = $("#closure_direction").val();
+        }
+
         var directionalCursors = $("#wmech_settingdircsdircur").is(":checked");
         $("#closure_direction").after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
                                       "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
@@ -1217,10 +1214,10 @@ var G_AMOUNTOFPRESETS = 100;
             $("#wmech_dBBA").css('background-color', '#ddd');
             $("#wmech_dBTW").css('background-color', '#26bae8');
         });
-        if (segDir == "AB") {
+        if (segDir == 1) {
             // Segment direction is A --> B
             $("#wmech_dBBA, #wmech_dBTW").remove();
-        } else if (segDir == "BA") {
+        } else if (segDir == 2) {
             // Segment direction is B --> A
             $("#wmech_dBAB, #wmech_dBTW").remove();
         }
