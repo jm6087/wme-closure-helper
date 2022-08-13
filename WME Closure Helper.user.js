@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2022.08.11.03
+// @version      2022.08.12.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -636,11 +636,11 @@ var G_AMOUNTOFPRESETS = 100;
 
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
         makeBulkButtons();
+        $("li.closure-item").each(function() {
         var $checkboxDiv = $("<div />");
         var $checkbox = $("<input />", { type: "checkbox", "class": "wmech_bulkCheckbox" }).css("height", "100%").css("margin-top", "0");
         $checkboxDiv.css("vertical-align", "middle").css("position", "relative").css("margin-left", "4px");
         $checkboxDiv.append($checkbox);
-        $("li.closure-item").each(function() {
             if ($( this ).find(".wmech_bulkCheckbox").length == 0) {
                 $( this ).css("display", "flex").css("margin-bottom", "5px");
                 $( this ).wrapInner("<div style='margin-left: 4px; width: 90%;'></div>");
@@ -739,7 +739,7 @@ var G_AMOUNTOFPRESETS = 100;
                 // Now, time to add a new closure!
                 $(".cancel-button").click();
                 $(".add-closure-button").click();
-                $("#closure_direction").val(dir).change();
+                $("#closure_direction wz-option[value=" + dir +"]").click();
                 $("#closure_reason").val(title).change();
                 $("#closure_startDate").val(startDate).change();
                 $("#closure_startTime").val(startTime).change();
