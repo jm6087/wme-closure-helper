@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2022.08.12.00
+// @version      2022.08.14.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
+// @connect      api.timezonedb.com
+// @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
 /* global W */
@@ -930,17 +932,22 @@ var G_AMOUNTOFPRESETS = 100;
             var center = W.map.getCenter();
             var actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
             var d = new Date();
-            $.get("https://api.timezonedb.com/v2.1/get-time-zone?key=" + apiVal + "&format=json&by=position&lat=" + actualCenter.lat + "&lng=" + actualCenter.lon).success(function(res) {
-                var newD = new Date(res.formatted);
-                var diff = Math.round((newD - d) / (1000 * 60 * 60));
-                var timeZone = res.abbreviation;
-                if (diff < 0) {
-                    var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind."
-                    } else {
-                        var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
-                        }
-                if (diff != 0) {
-                    $(".edit-closure > form > div:nth-child(4)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
+            GM.xmlHttpRequest({
+                method: "GET",
+                url: "https://api.timezonedb.com/v2.1/get-time-zone?key=" + apiVal + "&format=json&by=position&lat=" + actualCenter.lat + "&lng=" + actualCenter.lon,
+                responseType: "json",
+                onload: resp => {
+                    var newD = new Date(resp.response.formatted);
+                    var diff = Math.round((newD - d) / (1000 * 60 * 60));
+                    var timeZone = resp.response.abbreviation;
+                    if (diff < 0) {
+                        var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind."
+                        } else {
+                            var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
+                            }
+                    if (diff != 0) {
+                        $(".edit-closure > form > div:nth-child(4)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
+                    }
                 }
             });
         }
