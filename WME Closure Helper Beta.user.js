@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2022.08.14.00
+// @version      ß 2022.08.14.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -941,7 +941,7 @@ var G_AMOUNTOFPRESETS = 100;
                     var diff = Math.round((newD - d) / (1000 * 60 * 60));
                     var timeZone = resp.response.abbreviation;
                     if (diff < 0) {
-                        var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind."
+                        var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind.  Make sure to adjust your start time if you want the closure to go live now."
                         } else {
                             var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
                             }
