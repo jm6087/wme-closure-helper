@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2023.02.12.00
+// @version      ß 2023.02.17.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
@@ -753,7 +753,8 @@ var G_AMOUNTOFPRESETS = 100;
                 $("#closure_direction wz-option[value=" + dir +"]").click();
                 $("#closure_reason").val(title).change();
                 $("#closure_startDate").val(startDate).change();
-                $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").val(startTime).change();
+                //$("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").val(startTime).change();
+                changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input"),startTime);
 //                $("#closure_startTime").val(startTime).change();
                 $(".fromNodeClosed").each(function(i, e) {
                     if (nodes[i]) {
@@ -775,7 +776,8 @@ var G_AMOUNTOFPRESETS = 100;
                 setTimeout(function() {
                     // Wait for default end date/time adjustment
                     $("#closure_endDate").val(endDate).change();
-                    $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val(endTime).change();
+                    // $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val(endTime).change();
+                    changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"),endTime);
 //                    $("#closure_endTime").val(endTime).change();
                     addToEndStartDate(0, 1, 0);
                     addPanelWatcher();
@@ -1148,6 +1150,10 @@ var G_AMOUNTOFPRESETS = 100;
         $(".wmech_seglistchevron").toggleClass("fa-chevron-down fa-chevron-up");
     }
 
+    function updateClosureLength() {
+        $("#wmech_closurelengthval").text(closureLength());
+    }
+
     function addClosureLengthValue() {
         $(".form-group.end-date-form-group").after('<div class="form-group">' +
                                                    '<label class="control-label" for="closure_reason">Closure Length</label>' +
@@ -1156,11 +1162,10 @@ var G_AMOUNTOFPRESETS = 100;
                                                    '</div></div>');
         $("#wmech_closurelengthval").text(closureLength());
         $("#closure_startDate, " +
-          "#closure_startTime, " +
           "#closure_endDate, " +
-          "#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").on('change paste keyup input', function() {
+          ".time-picker-input").on('change paste keyup input', function() {
 //          "#closure_endTime").on('change paste keyup input', function() {
-            $("#wmech_closurelengthval").text(closureLength());
+            setTimeout(updateClosureLength,50);
         });
     }
 
@@ -1463,7 +1468,22 @@ var G_AMOUNTOFPRESETS = 100;
         var finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
         $("#closure_" + type + "Date").val(finalDate).change();
 //        $("#closure_" + type + "Time").val(finalTime).change();
-        $("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input").val(finalTime).change();
+        // $("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input").val(finalTime).change();
+        changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input"),finalTime);
+    }
+
+    function changeTimeField($element, time) {
+        $element.trigger({
+            type: "changeTime.timepicker",
+            time: {
+                value: time,
+                hours: time.substring(0, 2),
+                minutes: time.substring(3, 5),
+                seconds: 0,
+                meridian: 0
+                }
+         });
+
     }
 
     function formatTimeProp(num) {
@@ -1642,18 +1662,20 @@ var G_AMOUNTOFPRESETS = 100;
         ].join('\n\n'));
     }
 
-    function clickClosure(elem, dbl = false) {
+    async function clickClosure(elem, dbl = false) {
         if (W.model.actionManager._undoStack.length > 0) {
             return WazeWrap.Alerts.error(GM_info.script.name, "Can't add closure because you have unsaved edits.");
         }
         $("wz-button.add-closure-button").click();
+        await new Promise(r => setTimeout(r, 100));
         var ruleIndex = parseInt($(elem).data("preset-val"));
         var nameString = $("#wmech_preset" + (ruleIndex + 1) + "reason").val();
         $("#closure_reason").val(closureName(nameString)).change();
         if ($("#wmech_preset" + (ruleIndex + 1) + "timeString").val().length > 0) {
             var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
             $("#closure_endDate").val(ruleParsed[0]).change();
-            $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val(ruleParsed[1]).change();
+            //$("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val(ruleParsed[1]).change();
+            changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"), ruleParsed[1]);
 //            $("#closure_endTime").val(ruleParsed[1]).change();
         }
         var permClosures = $(".wmech_presetcheckbox").eq(ruleIndex).prop("checked");
