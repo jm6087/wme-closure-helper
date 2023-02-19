@@ -1,13 +1,16 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2022.08.14.01
+// @version      2023.02.19.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
-// @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
+// @match        https://beta.waze.com/*editor*
+// @match        https://www.waze.com/*editor*
+// @exclude      https://www.waze.com/*user/*editor/*
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // @connect      api.timezonedb.com
 // @grant        GM.xmlHttpRequest
+
 // ==/UserScript==
 
 /* global W */
@@ -77,8 +80,8 @@ var G_AMOUNTOFPRESETS = 100;
         if (lang_yyyymmdd3.indexOf(Lang) != -1){
             DateFormat = "yyyymmdd"
             dateSeparator = ".";
-//        dateseparator2 = ".";
-         }
+            //        dateseparator2 = ".";
+        }
         if (DateFormat == ""){
             DateFormat = "mmddyyyy";
             dateSeparator = "/";
@@ -195,7 +198,6 @@ var G_AMOUNTOFPRESETS = 100;
     function addSettingsInput(placeholder, id) {
         $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset wmech_settingsinput'>");
     }
-
 
     function initializeSettings() {
         prepareSettings();
@@ -322,7 +324,9 @@ var G_AMOUNTOFPRESETS = 100;
         if (localStorage) {
             localStorage.setItem("wmech_Settings", JSON.stringify(settings));
         }
-        await saveToServer();
+// COMMENTED OUT BECAUASE OF WW ISSUES
+//        await saveToServer();
+// COMMENTED OUT BECAUASE OF WW ISSUES
         setTimeout(loadSettings, 100);
     }
 
@@ -355,10 +359,13 @@ var G_AMOUNTOFPRESETS = 100;
                 color: "#ffffff"
             }]
         };
-        if (serverSettings != null && serverSettings.hasOwnProperty("enabled")) {
+// COMMENTED OUT BECAUASE OF WW ISSUES
+//        if (serverSettings != null && serverSettings.hasOwnProperty("enabled")) {
             // log("Using settings from WazeDev server.");
-            settings = serverSettings;
-        } else if (loadedSettings != null && loadedSettings.hasOwnProperty("enabled")) {
+//            settings = serverSettings;
+//        } else
+// COMMENTED OUT BECAUASE OF WW ISSUES
+        if (loadedSettings != null && loadedSettings.hasOwnProperty("enabled")) {
             // log("Using settings from local settings.");
             settings = loadedSettings;
         } else {
@@ -475,9 +482,9 @@ var G_AMOUNTOFPRESETS = 100;
         addPanelWatcher();
         addClosureCounter();
         formatClosureList();
-        $(".showHistory").click(function() {
-            setTimeout(addEnhancedClosureHistory, 1000);
-        });
+//         $(".toggleHistory").click(function() {
+//             setTimeout(addEnhancedClosureHistory, 1000);
+//         });
     }
 
     function addClosureCounter() {
@@ -540,109 +547,13 @@ var G_AMOUNTOFPRESETS = 100;
         //        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
     }
 
-    function addEnhancedClosureHistory() {
-        var segId = W.selectionManager._getSelectedSegments()[0].attributes.id;
-        var url = "https://" + document.location.host + W.Config.api_base + "/ElementHistory?objectID=" + segId + "&objectType=segment";
-        $.get(url).success(function(res) {
-            var transactions = res.transactions.objects;
-            for (var i = 0; i < transactions.length; i++) {
-                var count = 0;
-                var closureDetails = {};
-                var objs = transactions[i].objects;
-                var firstObj = objs[0];
-                var type = "None";
-                if (firstObj.actionType == "UPDATE" && firstObj.objectType == "roadClosure") {
-                    type = "Update";
-                } else if (firstObj.actionType == "ADD" && firstObj.objectType == "roadClosure") {
-                    type = "Add";
-                } else if (firstObj.actionType == "DELETE" && firstObj.objectType == "roadClosure") {
-                    type = "Delete";
-                }
-                for (var f = 0; f < objs.length; f++) {
-                    count++;
-                    if (type == "Delete") {
-                        closureDetails.TransactionID = transactions[i].transactionID;
-                        //closureDetails.ObjectID = objs[f].objectID;
-                        closureDetails.EndDate = objs[f].oldValue.endDate;
-                        closureDetails.StartDate = objs[f].oldValue.startDate;
-                        closureDetails.Active = objs[f].oldValue.active;
-                        closureDetails.Direction = "Unknown";
-                        if (count == 2) {
-                            closureDetails.Direction = "Two Way";
-                        } else {
-                            closureDetails.Direction = (objs[f].oldValue.forward == true ? "A --> B" : "B --> A");
-                        }
-                        closureDetails.Permanent = objs[f].oldValue.permanent;
-                        closureDetails.Reason = objs[f].oldValue.reason;
-                        closureDetails.EventID = objs[f].oldValue.eventId;
-                        var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
-                        if (mte != undefined) {
-                            closureDetails.mteName = mte.attributes.names[0].value;
-                        } else {
-                            closureDetails.mteName = "MTE was deleted/expired :(";
-                        }
-                    } else if (type == "Update") {
-                        closureDetails.TransactionID = transactions[i].transactionID;
-                        var oldValue = objs[f].oldValue;
-                        var newValue = objs[f].newValue;
-                        for (var k in oldValue) {
-                            if (oldValue.hasOwnProperty(k)) {
-                                var tempObj = {};
-                                tempObj["OLD" + k] = oldValue[k];
-                                Object.assign(closureDetails, tempObj);
-                            }
-                        }
-                        for (var k in newValue) {
-                            if (newValue.hasOwnProperty(k)) {
-                                var tempObj = {};
-                                tempObj["NEW" + k] = newValue[k];
-                                Object.assign(closureDetails, tempObj);
-                            }
-                        }
-                    } else if (type == "Add") {
-                        closureDetails.TransactionID = transactions[i].transactionID;
-                        //closureDetails.ObjectID = objs[f].objectID;
-                        closureDetails.EndDate = objs[f].newValue.endDate;
-                        closureDetails.StartDate = objs[f].newValue.startDate;
-                        closureDetails.Active = objs[f].newValue.active;
-                        closureDetails.Direction = "Unknown";
-                        if (count == 2) {
-                            closureDetails.Direction = "Two Way";
-                        } else {
-                            closureDetails.Direction = (objs[f].newValue.forward == true ? "A --> B" : "B --> A");
-                        }
-                        closureDetails.Reason = objs[f].newValue.reason;
-                        closureDetails.Permanent = objs[f].newValue.permanent;
-                        closureDetails.EventID = objs[f].newValue.eventId;
-                        var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
-                        if (mte != undefined) {
-                            closureDetails.mteName = mte.attributes.names[0].value;
-                        } else {
-                            closureDetails.mteName = "MTE was deleted/expired :(";
-                        }
-                    }
-                }
-                var $ul = $(".transactions").find("[data-transaction-i-d='" + closureDetails.TransactionID + "']").find(".related-objects-region ul");
-                for (var k in closureDetails) {
-                    if (closureDetails.hasOwnProperty(k)) {
-                        $ul.append($("<li />").text(k + ": " + closureDetails[k]));
-                    }
-                }
-            }
-        }).error(function(j, e) {
-            error("There was an error retrieving detailed closure history:")
-            console.log(j);
-            console.log(e);
-        });
-    }
-
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
         makeBulkButtons();
         $("li.closure-item").each(function() {
-        var $checkboxDiv = $("<div />");
-        var $checkbox = $("<input />", { type: "checkbox", "class": "wmech_bulkCheckbox" }).css("height", "100%").css("margin-top", "0");
-        $checkboxDiv.css("vertical-align", "middle").css("position", "relative").css("margin-left", "4px");
-        $checkboxDiv.append($checkbox);
+            var $checkboxDiv = $("<div />");
+            var $checkbox = $("<input />", { type: "checkbox", "class": "wmech_bulkCheckbox" }).css("height", "100%").css("margin-top", "0");
+            $checkboxDiv.css("vertical-align", "middle").css("position", "relative").css("margin-left", "4px");
+            $checkboxDiv.append($checkbox);
             if ($( this ).find(".wmech_bulkCheckbox").length == 0) {
                 $( this ).css("display", "flex").css("margin-bottom", "5px");
                 $( this ).wrapInner("<div style='margin-left: 4px; width: 90%;'></div>");
@@ -720,9 +631,11 @@ var G_AMOUNTOFPRESETS = 100;
         var title = $("#closure_reason").val();
         var dir = $("#closure_direction").val();
         var startDate = $("#closure_startDate").val();
-        var startTime = $("#closure_startTime").val();
+//        var startTime = $("#closure_startTime").val();
+        var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").val()
         var endDate = $("#closure_endDate").val();
-        var endTime = $("#closure_endTime").val();
+//        var endTime = $("#closure_endTime").val();
+        var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val()
         var waitForMTE = setInterval(function() {
             // Every 100 seconds check for late info!
             if ($(".wmech_mtelabel").length > 0) {
@@ -744,7 +657,8 @@ var G_AMOUNTOFPRESETS = 100;
                 $("#closure_direction wz-option[value=" + dir +"]").click();
                 $("#closure_reason").val(title).change();
                 $("#closure_startDate").val(startDate).change();
-                $("#closure_startTime").val(startTime).change();
+                changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input"),startTime);
+//                $("#closure_startTime").val(startTime).change();
                 $(".fromNodeClosed").each(function(i, e) {
                     if (nodes[i]) {
                         $(e).attr("checked", "checked");
@@ -765,7 +679,8 @@ var G_AMOUNTOFPRESETS = 100;
                 setTimeout(function() {
                     // Wait for default end date/time adjustment
                     $("#closure_endDate").val(endDate).change();
-                    $("#closure_endTime").val(endTime).change();
+                    changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"),endTime);
+//                    $("#closure_endTime").val(endTime).change();
                     addToEndStartDate(0, 1, 0);
                     addPanelWatcher();
                 }, 100);
@@ -953,7 +868,6 @@ var G_AMOUNTOFPRESETS = 100;
         }
     }
 
-
     function addPanelWatcher() {
         $("li.closure-item, .add-closure-button").off();
         $("li.closure-item, .add-closure-button").click(function() {
@@ -1048,6 +962,10 @@ var G_AMOUNTOFPRESETS = 100;
         $(".wmech_seglistchevron").toggleClass("fa-chevron-down fa-chevron-up");
     }
 
+    function updateClosureLength() {
+        $("#wmech_closurelengthval").text(closureLength());
+    }
+
     function addClosureLengthValue() {
         $(".form-group.end-date-form-group").after('<div class="form-group">' +
                                                    '<label class="control-label" for="closure_reason">Closure Length</label>' +
@@ -1056,19 +974,20 @@ var G_AMOUNTOFPRESETS = 100;
                                                    '</div></div>');
         $("#wmech_closurelengthval").text(closureLength());
         $("#closure_startDate, " +
-          "#closure_startTime, " +
           "#closure_endDate, " +
-          "#closure_endTime").on('change paste keyup input', function() {
-            $("#wmech_closurelengthval").text(closureLength());
+          ".time-picker-input").on('change paste keyup input', function() {
+            setTimeout(updateClosureLength,50);
         });
     }
 
     function closureLength() {
         var startDate = $("#closure_startDate").val();
-        var startTime = $("#closure_startTime").val();
+//        var startTime = $("#closure_startTime").val();
+        var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").val()
         var endDate = $("#closure_endDate").val();
-        var endTime = $("#closure_endTime").val();
-//        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
+//        var endTime = $("#closure_endTime").val();
+        var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val()
+        //        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
         var regex = /(\d*)(\-|\.|\/)(\d*)(\-|\.|\/)(\d*)(.*)/;
         var startDateResult = regex.exec(startDate);
         var endDateResult = regex.exec(endDate);
@@ -1176,7 +1095,7 @@ var G_AMOUNTOFPRESETS = 100;
             segDir = 3
             $("#closure_direction wz-option[value='3']").click();
         }else{
-        segDir = $("#closure_direction").val();
+            segDir = $("#closure_direction").val();
         }
 
         var directionalCursors = $("#wmech_settingdircsdircur").is(":checked");
@@ -1285,9 +1204,10 @@ var G_AMOUNTOFPRESETS = 100;
     function addToEndStartDate(o, d, m, type = "end") {
         var LY;
         var endDate = $("#closure_" + type + "Date").val();
-        var endTime = $("#closure_" + type + "Time").val();
+        var endTime = $("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input").val();
+//        var endTime = $("#closure_" + type + "Time").val();
         //            var regex = /(.*)\/(.*)\/(.*)/;
-//        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
+        //        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
         var regex = /(\d*)(\-|\.|\/)(\d*)(\-|\.|\/)(\d*)(.*)/;
         var endDateResult = regex.exec(endDate);
         if (DateFormat == "ddmmyyyy"){
@@ -1358,7 +1278,21 @@ var G_AMOUNTOFPRESETS = 100;
             }}
         var finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
         $("#closure_" + type + "Date").val(finalDate).change();
-        $("#closure_" + type + "Time").val(finalTime).change();
+//        $("#closure_" + type + "Time").val(finalTime).change();
+        changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input"),finalTime);
+    }
+
+    function changeTimeField($element, newtime) {
+        $element.trigger({
+            type: "changeTime.timepicker",
+            time: {
+                value: newtime,
+                hours: newtime.substring(0, 2),
+                minutes: newtime.substring(3, 5),
+                seconds: 0,
+                meridian: 0
+                }
+         });
     }
 
     function formatTimeProp(num) {
@@ -1367,9 +1301,9 @@ var G_AMOUNTOFPRESETS = 100;
 
     function addNodeClosureButtons() {
         $(".closure-nodes.form-group > wz-label").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
-                                                                 "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
-                                                                 "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
-                                                                 "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
+                                                        "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
+                                                        "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
+                                                        "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
         $(".wmech_nodeClosureButton").unbind();
         $("#wmech_nCBNone").click(toggleNoNodes);
         $("#wmech_nCBAll").click(toggleAllNodes);
@@ -1537,18 +1471,20 @@ var G_AMOUNTOFPRESETS = 100;
         ].join('\n\n'));
     }
 
-    function clickClosure(elem, dbl = false) {
+    async function clickClosure(elem, dbl = false) {
         if (W.model.actionManager._undoStack.length > 0) {
             return WazeWrap.Alerts.error(GM_info.script.name, "Can't add closure because you have unsaved edits.");
         }
         $("wz-button.add-closure-button").click();
+        await new Promise(r => setTimeout(r, 100));
         var ruleIndex = parseInt($(elem).data("preset-val"));
         var nameString = $("#wmech_preset" + (ruleIndex + 1) + "reason").val();
         $("#closure_reason").val(closureName(nameString)).change();
         if ($("#wmech_preset" + (ruleIndex + 1) + "timeString").val().length > 0) {
             var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
             $("#closure_endDate").val(ruleParsed[0]).change();
-            $("#closure_endTime").val(ruleParsed[1]).change();
+            changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"), ruleParsed[1]);
+//            $("#closure_endTime").val(ruleParsed[1]).change();
         }
         var permClosures = $(".wmech_presetcheckbox").eq(ruleIndex).prop("checked");
         if (permClosures) {
@@ -1580,7 +1516,8 @@ var G_AMOUNTOFPRESETS = 100;
         setTimeout(function() {
             $("#closure_reason").css("background-color", "rgba(63, 188, 113, 0.5)");
             $("#closure_endDate").css("background-color", "rgba(63, 188, 113, 0.5)");
-            $("#closure_endTime").css("background-color", "rgba(63, 188, 113, 0.5)");
+            $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").css("background-color", "rgba(63, 188, 113, 0.5)");
+//            $("#closure_endTime").css("background-color", "rgba(63, 188, 113, 0.5)");
             if (permClosures) {
                 $(".edit-closure > form > div > #closure_permanent").css("color", "rgba(63, 188, 113, 1)");
             }

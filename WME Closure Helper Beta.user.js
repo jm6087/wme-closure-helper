@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2023.02.17.00
+// @version      ß 2023.02.19.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
-// @include     /^https:\/\/(www|beta)\.waze\.com\/(?!user\/)(.{2,6}\/)?editor\/?.*$/
+// @match        https://beta.waze.com/*editor*
+// @match        https://www.waze.com/*editor*
+// @exclude      https://www.waze.com/*user/*editor/*
 // @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // @connect      api.timezonedb.com
 // @grant        GM.xmlHttpRequest
@@ -196,7 +198,6 @@ var G_AMOUNTOFPRESETS = 100;
     function addSettingsInput(placeholder, id) {
         $("#wmech-settings-boxes").append("<input type='text' id=\"" + id + "\" placeholder='" + placeholder + "' class='wmech_input wmech_inputpreset wmech_settingsinput'>");
     }
-
 
     function initializeSettings() {
         prepareSettings();
@@ -546,103 +547,6 @@ var G_AMOUNTOFPRESETS = 100;
         //        $(".closures-list-items").css({"overflow-y": "visible", "padding": 0});
     }
 
-//     function addEnhancedClosureHistory() {
-//         var segId = W.selectionManager._getSelectedSegments()[0].attributes.id;
-//         var url = "https://" + document.location.host + W.Config.api_base + "/ElementHistory?objectID=" + segId + "&objectType=segment";
-//         $.get(url).success(function(res) {
-//             var transactions = res.transactions.objects;
-//             for (var i = 0; i < transactions.length; i++) {
-//                 var count = 0;
-//                 var closureDetails = {};
-//                 var objs = transactions[i].objects;
-//                 var firstObj = objs[0];
-//                 var type = "None";
-//                 if (firstObj.actionType == "UPDATE" && firstObj.objectType == "roadClosure") {
-//                     type = "Update";
-//                 } else if (firstObj.actionType == "ADD" && firstObj.objectType == "roadClosure") {
-//                     type = "Add";
-//                 } else if (firstObj.actionType == "DELETE" && firstObj.objectType == "roadClosure") {
-//                     type = "Delete";
-//                 }
-//                 for (var f = 0; f < objs.length; f++) {
-//                     count++;
-//                     if (type == "Delete") {
-//                         closureDetails.TransactionID = transactions[i].transactionID;
-//                         //closureDetails.ObjectID = objs[f].objectID;
-//                         closureDetails.EndDate = objs[f].oldValue.endDate;
-//                         closureDetails.StartDate = objs[f].oldValue.startDate;
-//                         closureDetails.Active = objs[f].oldValue.active;
-//                         closureDetails.Direction = "Unknown";
-//                         if (count == 2) {
-//                             closureDetails.Direction = "Two Way";
-//                         } else {
-//                             closureDetails.Direction = (objs[f].oldValue.forward == true ? "A --> B" : "B --> A");
-//                         }
-//                         closureDetails.Permanent = objs[f].oldValue.permanent;
-//                         closureDetails.Reason = objs[f].oldValue.reason;
-//                         closureDetails.EventID = objs[f].oldValue.eventId;
-//                         var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
-//                         if (mte != undefined) {
-//                             closureDetails.mteName = mte.attributes.names[0].value;
-//                         } else {
-//                             closureDetails.mteName = "MTE was deleted/expired :(";
-//                         }
-//                     } else if (type == "Update") {
-//                         closureDetails.TransactionID = transactions[i].transactionID;
-//                         var oldValue = objs[f].oldValue;
-//                         var newValue = objs[f].newValue;
-//                         for (var k in oldValue) {
-//                             if (oldValue.hasOwnProperty(k)) {
-//                                 var tempObj = {};
-//                                 tempObj["OLD" + k] = oldValue[k];
-//                                 Object.assign(closureDetails, tempObj);
-//                             }
-//                         }
-//                         for (var k in newValue) {
-//                             if (newValue.hasOwnProperty(k)) {
-//                                 var tempObj = {};
-//                                 tempObj["NEW" + k] = newValue[k];
-//                                 Object.assign(closureDetails, tempObj);
-//                             }
-//                         }
-//                     } else if (type == "Add") {
-//                         closureDetails.TransactionID = transactions[i].transactionID;
-//                         //closureDetails.ObjectID = objs[f].objectID;
-//                         closureDetails.EndDate = objs[f].newValue.endDate;
-//                         closureDetails.StartDate = objs[f].newValue.startDate;
-//                         closureDetails.Active = objs[f].newValue.active;
-//                         closureDetails.Direction = "Unknown";
-//                         if (count == 2) {
-//                             closureDetails.Direction = "Two Way";
-//                         } else {
-//                             closureDetails.Direction = (objs[f].newValue.forward == true ? "A --> B" : "B --> A");
-//                         }
-//                         closureDetails.Reason = objs[f].newValue.reason;
-//                         closureDetails.Permanent = objs[f].newValue.permanent;
-//                         closureDetails.EventID = objs[f].newValue.eventId;
-//                         var mte = W.model.majorTrafficEvents.getObjectById(closureDetails.EventID);
-//                         if (mte != undefined) {
-//                             closureDetails.mteName = mte.attributes.names[0].value;
-//                         } else {
-//                             closureDetails.mteName = "MTE was deleted/expired :(";
-//                         }
-//                     }
-//                 }
-//                 var $ul = $(".transactions").find("[data-transaction-i-d='" + closureDetails.TransactionID + "']").find(".related-objects-region ul");
-//                 //                var $ul = $(".transactions").find("[transactionID='" + closureDetails.TransactionID + "']").find(".related-objects-region ul");
-//                 for (var k in closureDetails) {
-//                     if (closureDetails.hasOwnProperty(k)) {
-//                         $ul.append($("<li />").text(k + ": " + closureDetails[k]));
-//                     }
-//                 }
-//             }
-//         }).error(function(j, e) {
-//             error("There was an error retrieving detailed closure history:")
-//             console.log(j);
-//             console.log(e);
-//         });
-//     }
-
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
         makeBulkButtons();
         $("li.closure-item").each(function() {
@@ -753,7 +657,6 @@ var G_AMOUNTOFPRESETS = 100;
                 $("#closure_direction wz-option[value=" + dir +"]").click();
                 $("#closure_reason").val(title).change();
                 $("#closure_startDate").val(startDate).change();
-                //$("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").val(startTime).change();
                 changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input"),startTime);
 //                $("#closure_startTime").val(startTime).change();
                 $(".fromNodeClosed").each(function(i, e) {
@@ -776,7 +679,6 @@ var G_AMOUNTOFPRESETS = 100;
                 setTimeout(function() {
                     // Wait for default end date/time adjustment
                     $("#closure_endDate").val(endDate).change();
-                    // $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val(endTime).change();
                     changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"),endTime);
 //                    $("#closure_endTime").val(endTime).change();
                     addToEndStartDate(0, 1, 0);
@@ -939,96 +841,6 @@ var G_AMOUNTOFPRESETS = 100;
         setTimeout(addPanelWatcher, 3000);
     }
 
-//     function timeZoneCompare() {
-//         if ($("#wmech_settingtimezonewarn").is(":checked")) {
-//             var apiVal = $("#wmech_settingtimezoneapi").val();
-//             var center = W.map.getCenter();
-//             var actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
-//             var d = new Date();
-//             var sTime = $("#closure_startTime").val();
-//             var eTime = $("#closure_endTime").val();
-//             var sDate = $("#closure_startDate").val();
-//             var eDate = $("#closure_endDate").val();
-//             var regexTZ = /(.*):(.*)/;
-//             var TZstartTimeResult = regexTZ.exec(sTime);
-//             var TZstartHour = TZstartTimeResult[1];
-//             var TZstartMin = TZstartTimeResult[2];
-//             var TZendTimeResult = regexTZ.exec(eTime);
-//             var TZendHour = Number(TZendTimeResult[1]);
-//             var TZendMin = TZendTimeResult[2];
-//             var regexTZdate = /(.*)\/(.*)\/(.*)/;
-//             var TZsDate = regexTZdate.exec(sDate);
-//             var TZsMM = TZsDate[1];
-//             var TZsDD = TZsDate[2];
-//             var TZsYY = TZsDate[3];
-
-//             if (TZendHour < 10) {
-//                 var regexTZend = /([0123456789])([0123456789])/;
-//                 var TZendTimeResult2 = regexTZend.exec(TZendHour);
-//                 TZendHour = Number(TZendTimeResult2[2]);
-//             }
-
-//             GM.xmlHttpRequest({
-//                 method: "GET",
-//                 url: "https://api.timezonedb.com/v2.1/get-time-zone?key=" + apiVal + "&format=json&by=position&lat=" + actualCenter.lat + "&lng=" + actualCenter.lon,
-//                 responseType: "json",
-//                 onload: resp => {
-//                     var newD = new Date(resp.response.formatted);
-//                     var diff = Math.round((newD - d) / (1000 * 60 * 60));
-//                     var timeZone = resp.response.abbreviation;
-//                     var TZdiff = -1 * diff
-
-// //                     TZsMM = 1
-// //                     TZsDD = 1
-// //                     TZstartHour = 2
-
-//                     if (diff < 0) {
-// //                     var sdh = TZstartHour - TZdiff
-// ////                     Still need to figure out if TZsDD is on the 1st so that it changes month and day.
-// //                     if (sdh < 0) {
-// //                         if ((TZsMM == 2 || TZsMM == 4 || TZsMM == 6 || TZsMM == 8 || TZsMM == 9 || TZsMM == 11) && TZsDD == 1) {
-// //                             TZsMM = TZsMM - 1
-// //                             TZsDD = 31
-// //                         } else if ((TZsMM == 5 || TZsMM == 7 || TZsMM == 10 || TZsMM == 12) && TZsDD == 1) {
-// //                             TZsMM = TZsMM - 1
-// //                             TZsDD = 30
-// //                         } else if (TZsMM == 1 && TZsDD == 1) {
-// //                             TZsYY = TZsYY - 1;
-// //                             TZsMM = 12;
-// //                             TZsDD = 31;
-// //                         } else if (TZsMM == 3 && TZsDD == 1){
-// //                             if (TZsYY == 2024 || TZsYY == 2028 || TZsYY == 2032 || TZsYY == 2036 || TZsYY == 2040 || TZsYY == 2044 || TZsYY == 2048 || TZsYY == 2052) {
-// //                                 TZsDD = 29;
-// //                             } else {
-// //                                 TZsDD = 28;
-// //                             }} else TZsDD = TZsDD - 1;
-// //                         TZstartHour = 23;
-// //                         TZdiff = - 1 * sdh;
-// //                         $("#closure_startDate").val(TZsMM + "/" + TZsDD + "/" + TZsYY).change();
-// //                     }
-//                         var adjTime = (TZstartHour - TZdiff) + ":" + TZstartMin;
-//                         var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind. Start time was automatically adjusted to " + adjTime + " " + timeZone + " to ensure closure goes live"
-
-//                         $("#closure_startTime").val(adjTime).change();
-//                     } else {
-//                         if (tze > diff || tze < 0) {
-//                             var tze = TZendHour - diff
-//                             var adjTime = (TZstartHour - TZdiff) + ":" + TZstartMin;
-//                             var adjETime = TZendHour + ":" + TZendMin;
-//                             var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead. Start and End times have been automatically adjusted to " + timeZone
-//                             $("#closure_endTime").val(adjETime).change();
-//                             $("#closure_startTime").val(adjTime).change();
-//                         } else {
-//                             var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead. " + timeZone
-//                             }
-//                     }
-//                     if (diff != 0) {
-//                         $(".edit-closure > form > div:nth-child(4)").after("<div class='wmech_timezonewarnmessage'><span>Warning, your local time is " + sTime + " and the time for the closure you are adding is " + msg +"</span></div>");
-//                     }
-//                 }
-//             });
-//         }
-//     }
     function timeZoneCompare() {
         if ($("#wmech_settingtimezonewarn").is(":checked")) {
             var apiVal = $("#wmech_settingtimezoneapi").val();
@@ -1164,7 +976,6 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_startDate, " +
           "#closure_endDate, " +
           ".time-picker-input").on('change paste keyup input', function() {
-//          "#closure_endTime").on('change paste keyup input', function() {
             setTimeout(updateClosureLength,50);
         });
     }
@@ -1468,22 +1279,20 @@ var G_AMOUNTOFPRESETS = 100;
         var finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
         $("#closure_" + type + "Date").val(finalDate).change();
 //        $("#closure_" + type + "Time").val(finalTime).change();
-        // $("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input").val(finalTime).change();
         changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input"),finalTime);
     }
 
-    function changeTimeField($element, time) {
+    function changeTimeField($element, newtime) {
         $element.trigger({
             type: "changeTime.timepicker",
             time: {
-                value: time,
-                hours: time.substring(0, 2),
-                minutes: time.substring(3, 5),
+                value: newtime,
+                hours: newtime.substring(0, 2),
+                minutes: newtime.substring(3, 5),
                 seconds: 0,
                 meridian: 0
                 }
          });
-
     }
 
     function formatTimeProp(num) {
@@ -1674,7 +1483,6 @@ var G_AMOUNTOFPRESETS = 100;
         if ($("#wmech_preset" + (ruleIndex + 1) + "timeString").val().length > 0) {
             var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
             $("#closure_endDate").val(ruleParsed[0]).change();
-            //$("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val(ruleParsed[1]).change();
             changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"), ruleParsed[1]);
 //            $("#closure_endTime").val(ruleParsed[1]).change();
         }
