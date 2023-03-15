@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2023.02.19.01
+// @version      2023.03.15.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087
 // @match        https://beta.waze.com/*editor*
@@ -156,7 +156,7 @@ var G_AMOUNTOFPRESETS = 100;
         $section.html(tabString + "<div class='tab-content'>" + formString + settingsString + formatString + aboutString + "</div>");
 
         setTimeout(function() {
-            new WazeWrap.Interface.Tab('CH', $section.html(), initializeSettings);
+            WazeWrap.Interface.Tab('CH', $section.html(), initializeSettings, 'CH');
             $(".wmech_presetdiv").hide();
             $("#wmech_presetrow1").show();
             $("#wmech_presetchooser").change(function() {
