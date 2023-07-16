@@ -338,8 +338,7 @@ var G_AMOUNTOFPRESETS = 100;
 // COMMENTED OUT BECAUASE OF WW ISSUES
 //        await saveToServer();
 // COMMENTED OUT BECAUASE OF WW ISSUES
-// Unnecessary?
-//        setTimeout(loadSettings, 100);
+        setTimeout(loadSettings, 100);
     }
 
     async function saveToServer() {
