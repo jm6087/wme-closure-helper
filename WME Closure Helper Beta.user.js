@@ -153,7 +153,8 @@ var G_AMOUNTOFPRESETS = 100;
             '</ul>' +
             '</div>';
         formString = '<div class="wmech-tab-pane active" id="wmech-tab-presets"><label for="wmech_presetchooser">Choose a preset:</label><br><select id="wmech_presetchooser"></select>' + formString +
-            '<button class="wmech_closurebutton wmech_presetsavebutton" style="background-color: blue; color: white;">Save Presets</button></div>';
+            '<button class="wmech_closurebutton wmech_presetsavebutton" style="background-color: blue; color: white;">Save Presets</button></div>' +
+            '<div class="wmech-alert" id="wmech-save-notice">Save Successful</div>';
         $section.html(tabString + "<div class='tab-content'>" + formString + settingsString + formatString + aboutString + "</div>");
 
         setTimeout(function() {
@@ -293,6 +294,8 @@ var G_AMOUNTOFPRESETS = 100;
     function setUpSavePresetButton() {
         $(".wmech_presetsavebutton").click(async function() {
             saveSettings();
+            $('#wmech-save-notice').css("display", "block");
+            setTimeout(function() { $('#wmech-save-notice').css("display", "none"); }, 5000);
         });
     }
 
@@ -1480,7 +1483,8 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmech_timezonewarnmessage span { font-weight: bold; color: black; background-color: red }",
             ".wmech_settingsinput { text-align: center; width: 100%; }",
             ".wmech-tab-pane { width: 100%; display: none; padding: 15px 0; }",
-            ".wmech-tab-pane .active { width: 100%; display: block; padding: 15px 0; }"
+            ".wmech-tab-pane .active { width: 100%; display: block; padding: 15px 0; }",
+            ".wmech-alert { background-color: #00FFFF; border-radius: 5px; display: none; }"
         ].join('\n\n'));
     }
 
