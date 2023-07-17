@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2023.03.15.00
+// @version      ß 2023.07.16.01
 // @description  A script to help out with WME closure efforts! :D
-// @author       fourLoop & maintained by jm6087
+// @author       fourLoop & maintained by jm6087 fuji2086
 // @match        https://beta.waze.com/*editor*
 // @match        https://www.waze.com/*editor*
 // @exclude      https://www.waze.com/*user/*editor/*
@@ -121,8 +121,8 @@ var G_AMOUNTOFPRESETS = 100;
             '<li><a data-toggle="tab" href="#wmech-tab-format">Formatting</a></li>' +
             '<li><a data-toggle="tab" href="#wmech-tab-about">About</a></li>' +
             '</ul>';
-        var settingsString = '<div class="tab-pane" id="wmech-tab-settings"><h2><center>Settings</center></h2><div id="wmech-main-settings"><div id="wmech-settings-boxes"></div></div><div id="wmech-quicksearch-settings"></div></div>';
-        var formatString = '<div class="tab-pane" id="wmech-tab-format">' +
+        var settingsString = '<div class="wmech-tab-pane" id="wmech-tab-settings"><h2><center>Settings</center></h2><div id="wmech-main-settings"><div id="wmech-settings-boxes"></div></div><div id="wmech-quicksearch-settings"></div></div>';
+        var formatString = '<div class="wmech-tab-pane" id="wmech-tab-format">' +
             '<h2><center>Formatting</center></h2>' +
             '<h3>Formatting Time Strings</h3>' +
             '<ul>' +
@@ -144,7 +144,7 @@ var G_AMOUNTOFPRESETS = 100;
             '<li><b>{{lastSegName}}</b> = The name of the last selected segment, in order of click</li>' +
             '</ul>' +
             '</div>';
-        var aboutString = '<div class="tab-pane" id="wmech-tab-about"><h2><center>About</center></h2>' +
+        var aboutString = '<div class="wmech-tab-pane" id="wmech-tab-about"><h2><center>About</center></h2>' +
             '<ul>' +
             '<li>' + GM_info.script.version + '</li>' +
             '<li>Made by ' + GM_info.script.author + '</li>' +
@@ -152,7 +152,9 @@ var G_AMOUNTOFPRESETS = 100;
             '<li>Thanks to all of you amazing editors who make the map better every day <3' +
             '</ul>' +
             '</div>';
-        formString = '<div class="tab-pane active" id="wmech-tab-presets"><label for="wmech_presetchooser">Choose a preset:</label><br><select id="wmech_presetchooser"></select>' + formString + '</div>';
+        formString = '<div class="wmech-tab-pane active" id="wmech-tab-presets"><label for="wmech_presetchooser">Choose a preset:</label><br><select id="wmech_presetchooser"></select>' + formString +
+            '<button class="wmech_closurebutton wmech_presetsavebutton" style="background-color: blue; color: white;">Save Presets</button></div>' +
+            '<div class="wmech-alert" id="wmech-save-notice">Save Successful</div>';
         $section.html(tabString + "<div class='tab-content'>" + formString + settingsString + formatString + aboutString + "</div>");
 
         setTimeout(function() {
@@ -201,6 +203,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function initializeSettings() {
         prepareSettings();
+        setUpSavePresetButton();
         setUpDeletePresetButton();
         attachObserver();
 
@@ -262,6 +265,7 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.settingsCheckboxes = {};
             }
             settings.settingsCheckboxes[settingName] = $(this).is(":checked");
+            saveSettings();
         });
         $(".wmech_settingsinput").on('change paste keyup input', function() {
             var id = $(this)[0].id;
@@ -272,17 +276,27 @@ var G_AMOUNTOFPRESETS = 100;
                 settings.settingsInputs = {};
             }
             settings.settingsInputs[settingName] = $(this).val();
+            saveSettings();
         });
-        var settingsSaver = setInterval(function() {
+        //Added save button to eliminate the need to save settings every 6 seconds.
+        /*var settingsSaver = setInterval(function() {
             saveSettings();
             // log("Save settings ran.");
-        }, 60000);
+        }, 60000);*/
 
         // Enable tooltips
         $(".wmech_presetpermatooltip").tooltip();
 
         setTimeout(loadSettings, 2500);
         log("Settings initialized.");
+    }
+
+    function setUpSavePresetButton() {
+        $(".wmech_presetsavebutton").click(async function() {
+            saveSettings();
+            $('#wmech-save-notice').css("display", "block");
+            setTimeout(function() { $('#wmech-save-notice').css("display", "none"); }, 5000);
+        });
     }
 
     function setUpDeletePresetButton() {
@@ -1467,7 +1481,10 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmech_settingsheader { font-weight: bold; margin-bottom: 0 !important; }",
             ".wmech_timezonewarnmessage { text-align: center }",
             ".wmech_timezonewarnmessage span { font-weight: bold; color: black; background-color: red }",
-            ".wmech_settingsinput { text-align: center; width: 100%; }"
+            ".wmech_settingsinput { text-align: center; width: 100%; }",
+            ".wmech-tab-pane { width: 100%; display: none; padding: 15px 0; }",
+            ".wmech-tab-pane .active { width: 100%; display: block; padding: 15px 0; }",
+            ".wmech-alert { background-color: #00FFFF; border-radius: 5px; display: none; }"
         ].join('\n\n'));
     }
 
