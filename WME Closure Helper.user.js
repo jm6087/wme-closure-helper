@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2023.07.16.00
+// @version      2023.08.23.00
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -1543,17 +1543,27 @@ var G_AMOUNTOFPRESETS = 100;
         var dirNumber = 3;
         if (direction == "Two Way") {
             dirNumber = 3;
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#26bae8');
         } else if (direction == "A --> B") {
             dirNumber = 1;
+            $("#wmech_dBAB").css('background-color', '#26bae8');
+            $("#wmech_dBBA").css('background-color', '#ddd');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         } else if (direction == "B --> A") {
             dirNumber = 2;
+            $("#wmech_dBAB").css('background-color', '#ddd');
+            $("#wmech_dBBA").css('background-color', '#26bae8');
+            $("#wmech_dBTW").css('background-color', '#ddd');
         }
         $("#closure_direction wz-option[value='" + dirNumber + "']").click();
+
         var mteRegEx = $("#wmech_preset" + (ruleIndex + 1) + "mteString").val();
         if (mteRegEx.length > 0) {
             var mteFuncResult = matchMTE(mteRegEx);
             if (mteFuncResult != false) {
-                $("#closure_eventId").val(mteFuncResult.val.toString());
+                $("#closure_eventId").value(mteFuncResult.val.toString());
             }
         }
     }
@@ -1861,3 +1871,4 @@ var G_AMOUNTOFPRESETS = 100;
 
     bootstrap();
 })();
+
