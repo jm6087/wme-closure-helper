@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2023.09.07.01
+// @version      ß 2023.09.07.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -1586,8 +1586,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function closureName(reason) {
         var finalString = reason;
-        var selectedType = $("wz-select[name='roadType']").val();
-        selectedType = getSelectedType(selectedType);
+        var selectedType = getSelectedType(selectedType);
         // Replace with name and type
         finalString = finalString.replace("{{type}}", selectedType);
 
@@ -1612,34 +1611,48 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function getSelectedType(option) {
-        var rawType = $("wz-select[name='roadType'] option[value='" + option + "']").text();
+        var SelObj = W.selectionManager.getSelectedDataModelObjects();
+        var rawType = SelObj[0].attributes.roadType;
         var newType;
         switch (rawType) {
-            case "Off-road / Not maintained":
+            case 8: // Off-road / Not maintained"
                 newType = "Road";
                 break;
-            case "Local Street":
+            case 1: // Local Street"
                 newType = "Street";
                 break;
-            case "Primary Street":
-                newType = "Street";
+            case 2: // Primary Street"
+                newType = "Primary Street";
                 break;
-            case "Freeway (Interstate / Other)":
+            case 3: // Freeway (Interstate / Other)
+                newType = "Freeway";
+                break;
+            case 6: // Major Highway
                 newType = "Highway";
                 break;
-            case "Major Highway":
+            case 7: //Minor Highway
                 newType = "Highway";
                 break;
-            case "Minor Highway":
-                newType = "Highway";
+            case 4: // Ramp
+                newType = "Ramp";
                 break;
-            case "< Multiple >":
+            case 20: // PLR
+                newType = "Parking Lot";
+                break;
+            case 17: // PR
+                newType = "Private";
+                break;
+            case 15: // Ferry
+                newType = "Ferry";
+                break;
+            default: // Other road types
                 newType = "Roads";
                 break;
-            default:
-                newType = rawType;
-                break;
         }
+               if (SelObj.length > 1) { // If multiple segments selected, check for different road types
+                   const multipleTypesSelected = SelObj.some(seg => seg.attributes.roadType !== SelObj[0].attributes.roadType);
+                   if (multipleTypesSelected == true) {newType = "Multiple Road Types"};
+               }
         return newType;
     }
 
