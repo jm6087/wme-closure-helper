@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2023.08.26.01
+// @version      ß 2023.09.07.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -1586,15 +1586,15 @@ var G_AMOUNTOFPRESETS = 100;
 
     function closureName(reason) {
         var finalString = reason;
-        var selectedType = $("select[name='roadType']").val();
+        var selectedType = $("wz-select[name='roadType']").val();
         selectedType = getSelectedType(selectedType);
         // Replace with name and type
         finalString = finalString.replace("{{type}}", selectedType);
 
         // Replace with segs
         var selectedSegs = W.selectionManager.getSegmentSelection().segments;
-        var firstSelectedSegName = W.model.streets.getObjectById(selectedSegs[0].attributes.primaryStreetID).name;
-        var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).name;
+        var firstSelectedSegName = W.model.streets.getObjectById(selectedSegs[0].attributes.primaryStreetID).attributes.name;
+        var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).attributes.name;
         if (firstSelectedSegName == null) {
             firstSelectedSegName = "";
         }
@@ -1612,7 +1612,7 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function getSelectedType(option) {
-        var rawType = $("select[name='roadType'] option[value='" + option + "']").text();
+        var rawType = $("wz-select[name='roadType'] option[value='" + option + "']").text();
         var newType;
         switch (rawType) {
             case "Off-road / Not maintained":
