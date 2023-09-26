@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2023.09.26.01
+// @version      2023.09.26.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -35,7 +35,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     //Bootstrap
     function bootstrap(tries = 1) {
-        if (typeof W = 'object' && W.userscripts?.state?.isReady && W.map &&
+        if (typeof W === 'object' && W.userscripts?.state?.isReady && W.map &&
             W.model && W.loginManager.user && WazeWrap.Ready) {
             log("Here we go!!! Starting program!");
             init();
