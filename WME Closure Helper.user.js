@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2023.09.26.02
+// @version      2023.11.29.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -32,6 +32,7 @@ var G_AMOUNTOFPRESETS = 100;
     var DateFormat = "";
     let Lang;
     var dateSeparator;
+    let radio = "";
 
     //Bootstrap
     function bootstrap(tries = 1) {
@@ -534,6 +535,7 @@ var G_AMOUNTOFPRESETS = 100;
                         style: ('background-color: ' + color + '; color:' + textColor)
                     }).text(nameInput).attr("data-preset-val", presetCount - 1).on("click", function() {
                         clickClosure($(this), false);
+                        radio = "no";
                     }));
             }
         }
@@ -963,6 +965,7 @@ var G_AMOUNTOFPRESETS = 100;
                                         '<div class="controls"><ul id="wmech_seginfonames">' + '</ul></div></div>');
         $(".edit-closure form .form-group").first().click(collapseSegList);
         if ($("#wmech_settingseglistcollapse").prop("checked")) {
+//            radio = "checked"
             collapseSegList();
         }
         var streets = getAllStreets();
@@ -1389,7 +1392,8 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function addMTERadios() {
-        $("#closure_eventId").parent().css("height", 0).css("overflow", "hidden");
+        if (radio != "no"){
+         $("#closure_eventId").parent().css("height", 0).css("overflow", "hidden");
         $("#closure_eventId").removeAttr("required");
         $(".label-with-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
         var to = $("#closure_eventId").children().length - 1;
@@ -1417,6 +1421,8 @@ var G_AMOUNTOFPRESETS = 100;
         } else {
             $("input[data-mte-val='" + firstSelected + "']").click();
         }
+        }
+        radio = ""
     }
 
     function checkIfNeedToAddPanelWatcher() {
@@ -1563,7 +1569,7 @@ var G_AMOUNTOFPRESETS = 100;
         if (mteRegEx.length > 0) {
             var mteFuncResult = matchMTE(mteRegEx);
             if (mteFuncResult != false) {
-                $("#closure_eventId").value(mteFuncResult.val.toString());
+                $("#closure_eventId").val(mteFuncResult.val.toString());
             }
         }
     }
@@ -1884,4 +1890,3 @@ var G_AMOUNTOFPRESETS = 100;
 
     bootstrap();
 })();
-
