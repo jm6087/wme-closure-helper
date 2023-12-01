@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2023.11.29.01
+// @version      2023.11.30.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -1664,6 +1664,9 @@ var G_AMOUNTOFPRESETS = 100;
 
     function parseRule(rule) {
         //alert(rule);
+        var LY;
+        var newMon = 0;
+        var newDay = 0;
         var d = new Date();
         var yr = d.getFullYear();
         var mon = d.getMonth() + 1;
@@ -1675,10 +1678,35 @@ var G_AMOUNTOFPRESETS = 100;
             var timeString = rule.substring(3);
             var ruleHr = parseInt(timeString.substring(0, 2));
             var ruleMin = parseInt(timeString.substring(3, 5));
+            // fix for last day of month and adding 1 month with clicksaver to ensure it is actually last day of following month.
+        if (yr == "2024" || yr == "2028" || yr == "2032" || yr == "2036" || yr == "2040" || yr == "2044" || yr == "2048") LY = "yes";
+            if (mon == "04" || mon == "06" || mon == "07" || mon == "09" || mon == "11" || mon == "12"){
+                if (day == "30"){
+                    newMon = mon + 1;
+                    newDay = 1;
+                }
+            }else{
+                if (mon == "03" || mon == "05" || mon == "08" || mon == "10"){
+                    if (day == "31"){
+                        newMon = mon + 1;
+                        newDay = 1;
+                    }
+                }else{
+                    if (mon == "02" && day > "27"){
+                        if (LY == "yes"){
+                            newMon = mon + 1;
+                            newDay = 1;
+                        }else{
+                            newMon = mon + 1;
+                            newDay = 1;
+                        }
+                    }
+                }
+       }
             if (count == 0) {
                 // (ex. "U: 05:00", "U: 23:15")
                 if (ruleHr > hr || (ruleHr == hr && ruleMin > min)) { return [assembleYear([yr, mon, day]), assembleTime([ruleHr, ruleMin])]; }
-                if ((ruleHr == hr && ruleMin == min) || (ruleHr == hr && ruleMin < min) || (ruleHr < hr)) { return [assembleYear([yr, mon, day + 1]), assembleTime([ruleHr, ruleMin])]; }
+                if ((ruleHr == hr && ruleMin == min) || (ruleHr == hr && ruleMin < min) || (ruleHr < hr)) { return [assembleYear([yr, newMon, newDay]), assembleTime([ruleHr, ruleMin])]; }
             } else if (count == 1) {
                 timeString = rule.substring(3, 8);
                 var durationString = rule.substring(rule.lastIndexOf(" ") + 1).trim();
