@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2023.12.06.01
+// @version      ß 2023.12.06.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -1571,6 +1571,8 @@ var G_AMOUNTOFPRESETS = 100;
             if (mteFuncResult != false) {
                 $("#closure_eventId").val(mteFuncResult.val.toString());
             }
+        }else{
+            document.querySelector("#closure_eventId > wz-option:nth-child(1)").shadowRoot.querySelector("div").click();
         }
     }
 
