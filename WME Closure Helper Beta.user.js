@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2023.11.30.01
+// @version      ß 2023.12.06.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -1664,7 +1664,7 @@ var G_AMOUNTOFPRESETS = 100;
 
     function parseRule(rule) {
         //alert(rule);
-        var LY;
+        var LY = "no";
         var newMon = 0;
         var newDay = 0;
         var d = new Date();
@@ -1684,25 +1684,31 @@ var G_AMOUNTOFPRESETS = 100;
                 if (day == "30"){
                     newMon = mon + 1;
                     newDay = 1;
+                }else{
+                    newMon = mon;
+                    newDay = day + 1;
                 }
             }else{
                 if (mon == "03" || mon == "05" || mon == "08" || mon == "10"){
                     if (day == "31"){
                         newMon = mon + 1;
                         newDay = 1;
-                    }
+                    }else{
+                    newMon = mon;
+                    newDay = day + 1;
+                }
                 }else{
-                    if (mon == "02" && day > "27"){
-                        if (LY == "yes"){
+                    if (mon == "02" && day > "27" && LY == "no" || mon == "02" && day > "28" && LY == "yes"){
+//                        if (LY == "yes" && day > "28"){
                             newMon = mon + 1;
                             newDay = 1;
                         }else{
-                            newMon = mon + 1;
-                            newDay = 1;
+                            newMon = mon;
+                            newDay = day;
                         }
                     }
                 }
-       }
+//       }
             if (count == 0) {
                 // (ex. "U: 05:00", "U: 23:15")
                 if (ruleHr > hr || (ruleHr == hr && ruleMin > min)) { return [assembleYear([yr, mon, day]), assembleTime([ruleHr, ruleMin])]; }
