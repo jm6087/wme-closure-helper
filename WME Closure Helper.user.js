@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2023.12.06.02
+// @version      2025.02.14.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -648,10 +648,10 @@ var G_AMOUNTOFPRESETS = 100;
         var dir = $("#closure_direction").val();
         var startDate = $("#closure_startDate").val();
 //        var startTime = $("#closure_startTime").val();
-        var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").val()
+        var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
         var endDate = $("#closure_endDate").val();
 //        var endTime = $("#closure_endTime").val();
-        var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val()
+        var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
         var waitForMTE = setInterval(function() {
             // Every 100 seconds check for late info!
             if ($(".wmech_mtelabel").length > 0) {
@@ -672,8 +672,9 @@ var G_AMOUNTOFPRESETS = 100;
                 $(".add-closure-button").click();
                 $("#closure_direction wz-option[value=" + dir +"]").click();
                 $("#closure_reason").val(title).change();
-                $("#closure_startDate").val(startDate).change();
-                changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input"),startTime);
+                changeDateField("#closure_startDate", startDate);
+//                $("#closure_startDate").val(startDate).change();
+                changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"),startTime);
 //                $("#closure_startTime").val(startTime).change();
                 $(".fromNodeClosed").each(function(i, e) {
                     if (nodes[i]) {
@@ -694,8 +695,9 @@ var G_AMOUNTOFPRESETS = 100;
                 }
                 setTimeout(function() {
                     // Wait for default end date/time adjustment
-                    $("#closure_endDate").val(endDate).change();
-                    changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"),endTime);
+                    changeDateField("#closure_endDate", endDate);
+//                    $("#closure_endDate").val(endDate).change();
+                    changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"),endTime);
 //                    $("#closure_endTime").val(endTime).change();
                     addToEndStartDate(0, 1, 0);
                     addPanelWatcher();
@@ -1000,10 +1002,10 @@ var G_AMOUNTOFPRESETS = 100;
     function closureLength() {
         var startDate = $("#closure_startDate").val();
 //        var startTime = $("#closure_startTime").val();
-        var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > div > input").val()
+        var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
         var endDate = $("#closure_endDate").val();
 //        var endTime = $("#closure_endTime").val();
-        var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").val()
+        var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
         //        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
         var regex = /(\d*)(\-|\.|\/)(\d*)(\-|\.|\/)(\d*)(.*)/;
         var startDateResult = regex.exec(startDate);
@@ -1106,7 +1108,7 @@ var G_AMOUNTOFPRESETS = 100;
     };
 
     function addDirectionCS() {
-        var DirLen = W.selectionManager.getSelectedFeatures().length
+        var DirLen = W.selectionManager.getSelectedWMEFeatures().length
         var segDir;
         if (DirLen > 1) {
             segDir = 3
@@ -1220,8 +1222,10 @@ var G_AMOUNTOFPRESETS = 100;
 
     function addToEndStartDate(o, d, m, type = "end") {
         var LY;
+        var finalDate;
+        var finalTime;
         var endDate = $("#closure_" + type + "Date").val();
-        var endTime = $("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input").val();
+        var endTime = $("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val();
 //        var endTime = $("#closure_" + type + "Time").val();
         //            var regex = /(.*)\/(.*)\/(.*)/;
         //        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
@@ -1286,30 +1290,31 @@ var G_AMOUNTOFPRESETS = 100;
         res.setDate(res.getDate() + d);
         res.setMonth(res.getMonth() + o);
         if (DateFormat == "ddmmyyyy"){
-            var finalDate = formatTimeProp(formatTimeProp(res.getDate())) + dateSeparator + (parseInt(res.getMonth()) + 1) + dateSeparator + res.getFullYear();
+            finalDate = formatTimeProp(formatTimeProp(res.getDate())) + dateSeparator + (parseInt(res.getMonth()) + 1) + dateSeparator + res.getFullYear();
         }else{
             if (DateFormat == "yyyymmdd"){
-                var finalDate = res.getFullYear() + dateSeparator + (parseInt(res.getMonth()) + 1) + dateSeparator + formatTimeProp(res.getDate());
+                finalDate = res.getFullYear() + dateSeparator + (parseInt(res.getMonth()) + 1) + dateSeparator + formatTimeProp(res.getDate());
             }else{
-                var finalDate = formatTimeProp(parseInt(res.getMonth()) + 1) + dateSeparator + formatTimeProp(res.getDate()) + dateSeparator + res.getFullYear();
+                finalDate = formatTimeProp(parseInt(res.getMonth()) + 1) + dateSeparator + formatTimeProp(res.getDate()) + dateSeparator + res.getFullYear();
             }}
-        var finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
-        $("#closure_" + type + "Date").val(finalDate).change();
+        finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
+//        $("#closure_" + type + "Date").val(finalDate).change();
+        changeDateField("#closure_" + type + "Date", finalDate);
 //        $("#closure_" + type + "Time").val(finalTime).change();
-        changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > div > input"),finalTime);
+        changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"),finalTime);
+    }
+
+    function changeDateField(element, newDate) {
+        const newDateObj = $(element).data('daterangepicker')
+        newDateObj.setStartDate(newDate)
+        $(element).trigger(
+            'apply.daterangepicker',
+            [newDateObj]
+        )
     }
 
     function changeTimeField($element, newtime) {
-        $element.trigger({
-            type: "changeTime.timepicker",
-            time: {
-                value: newtime,
-                hours: newtime.substring(0, 2),
-                minutes: newtime.substring(3, 5),
-                seconds: 0,
-                meridian: 0
-                }
-         });
+         $element.timepicker('setTime',newtime);
     }
 
     function formatTimeProp(num) {
@@ -1505,8 +1510,9 @@ var G_AMOUNTOFPRESETS = 100;
         $("#closure_reason").val(closureName(nameString)).change();
         if ($("#wmech_preset" + (ruleIndex + 1) + "timeString").val().length > 0) {
             var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
-            $("#closure_endDate").val(ruleParsed[0]).change();
-            changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input"), ruleParsed[1]);
+            changeDateField("#closure_endDate", ruleParsed[0]);
+//            $("#closure_endDate").val(ruleParsed[0]).change();
+            changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), ruleParsed[1]);
 //            $("#closure_endTime").val(ruleParsed[1]).change();
         }
         var permClosures = $(".wmech_presetcheckbox").eq(ruleIndex).prop("checked");
@@ -1539,7 +1545,7 @@ var G_AMOUNTOFPRESETS = 100;
         setTimeout(function() {
             $("#closure_reason").css("background-color", "rgba(63, 188, 113, 0.5)");
             $("#closure_endDate").css("background-color", "rgba(63, 188, 113, 0.5)");
-            $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > div > input").css("background-color", "rgba(63, 188, 113, 0.5)");
+            $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").css("background-color", "rgba(63, 188, 113, 0.5)");
 //            $("#closure_endTime").css("background-color", "rgba(63, 188, 113, 0.5)");
             if (permClosures) {
                 $(".edit-closure > form > div > #closure_permanent").css("color", "rgba(63, 188, 113, 1)");
