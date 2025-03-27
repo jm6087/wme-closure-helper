@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper - Beta
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      ß 2025.02.14.01
+// @version      ß 2025.03.27.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -33,6 +33,9 @@ var G_AMOUNTOFPRESETS = 100;
     let Lang;
     var dateSeparator;
     let radio = "";
+    let locationTimezoneName = null; // Store location timezone name
+    let originalStartDate = null; // Store original local start date/time
+    let originalEndDate = null;   // Store original local end date/time	
 
     //Bootstrap
     function bootstrap(tries = 1) {
@@ -858,10 +861,49 @@ var G_AMOUNTOFPRESETS = 100;
         $("wz-menu-item.delete").off('click.wmech_bulk');
         setTimeout(addPanelWatcher, 3000);
     }
+    async function getTimezoneNameFromCoords(lat, lng) {
+        return new Promise((resolve, reject) => {
+            if ($("#wmech_settingtimezonewarn").is(":checked")) {
+                var apiVal = $("#wmech_settingtimezoneapi").val();
+
+                if (!apiVal) {
+                    reject("TimezoneDB API key is missing.");
+                    return;
+                }
+
+                GM.xmlHttpRequest({
+                    method: "GET",
+                    url: "https://api.timezonedb.com/v2.1/get-time-zone?key=" + apiVal + "&format=json&by=position&lat=" + lat + "&lng=" + lng,
+                    responseType: "json",
+                    onload: resp => {
+                        if (resp.status !== 200 || !resp.response) {
+                            reject("Error fetching timezone data from TimezoneDB.");
+                            return;
+                        }
+
+                        if (resp.response.status === 'OK') {
+                            resolve(resp.response.zoneName);
+                        } else {
+                            reject("TimezoneDB error: " + resp.response.message);
+                        }
+                    },
+                    onerror: (error) => {
+                        reject("Network error during TimezoneDB request.");
+                    }
+                });
+            } else {
+                reject("Timezone warning disabled.");
+            }
+        });
+    }	
 
     function timeZoneCompare() {
         if ($("#wmech_settingtimezonewarn").is(":checked")) {
             var apiVal = $("#wmech_settingtimezoneapi").val();
+        if (!apiVal) {
+            $(".edit-closure > form").prepend("<div class='wmech_timezonewarnmessage wmech_error'><span>Please enter your TimezoneDB API key in the WME Toolbox settings.</span></div>");
+            return;
+        }
             var center = W.map.getCenter();
             var actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
             var d = new Date();
@@ -870,21 +912,185 @@ var G_AMOUNTOFPRESETS = 100;
                 url: "https://api.timezonedb.com/v2.1/get-time-zone?key=" + apiVal + "&format=json&by=position&lat=" + actualCenter.lat + "&lng=" + actualCenter.lon,
                 responseType: "json",
                 onload: resp => {
+                if (resp.status !== 200 || !resp.response) {
+                    $(".edit-closure > form").prepend("<div class='wmech_timezonewarnmessage wmech_error'><span>Error fetching timezone data from TimezoneDB. Please check your API key and internet connection.</span></div>");
+                    return;
+                }
+
+                try {					
                     var newD = new Date(resp.response.formatted);
-                    var diff = Math.round((newD - d) / (1000 * 60 * 60));
+                    // Calculate difference in milliseconds
+                    var diffMs = newD - d;
+                    var diffDir = diffMs > 0 ? "ahead" : "behind"; // Determine if ahead or behind
+                    diffMs = Math.abs(diffMs); // Work with absolute difference
+
+                    var diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    var diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
                     var timeZone = resp.response.abbreviation;
-                    if (diff < 0) {
-                        var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind.  Make sure to adjust your start time if you want the closure to go live now."
-                        } else {
-                            var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
-                            }
-                    if (diff != 0) {
-                        $(".edit-closure > form > div:nth-child(4)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
+                    var msgParts = [];
+
+                    if (diffHours > 0) {
+                        msgParts.push(diffHours + " hour" + (diffHours > 1 ? "s" : ""));
                     }
+                    if (diffMinutes > 0) {
+                        msgParts.push(diffMinutes + " minute" + (diffMinutes > 1 ? "s" : ""));
+                    }
+
+                    var msg = msgParts.join(" ") + " " + diffDir;
+
+                    if (diffHours !== 0 || diffMinutes !== 0) { // Check if there's any difference
+                        let insertionPoint = $(".edit-closure > form .form-group:last-of-type");
+                        if (!insertionPoint.length) {
+                            insertionPoint = $(".edit-closure > form");
+                        }
+                        insertionPoint.before("<div class='wmech_timezonewarnmessage'><span>Warning: The timezone at the closure location is different from your local timezone by " + msg + ". Make sure to adjust your start time if you want the closure to go live now.</span></div>");
+                        } else {
+                        $(".wmech_timezonewarnmessage").remove();
+                            }
+                } catch (e) {
+                    console.error("Error processing TimezoneDB response:", e);
+                    $(".edit-closure > form").prepend("<div class='wmech_timezonewarnmessage wmech_error'><span>Error processing timezone data. Please check the console for details.</span></div>");
+                    }
+            },
+            onerror: (error) => {
+                console.error("Network error during TimezoneDB request:", error);
+                $(".edit-closure > form").prepend("<div class='wmech_timezonewarnmessage wmech_error'><span>Network error fetching timezone data. Please check your internet connection.</span></div>");					
                 }
             });
+    } else {
+        $(".wmech_timezonewarnmessage").remove();			
+        }
+}
+
+    function adjustClosureTimesToLocationTimezone() {
+        $(".wmech_timezone_adjusted_indicator").remove(); // Remove any existing indicator
+
+
+        if ($("#wmech_settingtimezoneadjust_closure").is(":checked")) { // Use the new checkbox ID
+            let center = W.map.getCenter();
+            let actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
+
+            getTimezoneNameFromCoords(actualCenter.lat, actualCenter.lon)
+                .then(tzName => {
+                    locationTimezoneName = tzName;
+                    log("Location Timezone: " + locationTimezoneName);
+
+                    let startDateStr = $("#closure_startDate").val();
+                    let startTimeStr = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val();
+                    let endDateStr = $("#closure_endDate").val();
+                    let endTimeStr = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val();
+
+                    if (startDateStr && startTimeStr && endDateStr && endTimeStr) {
+                        originalStartDate = { // Store current local time before adjustment
+                            date: startDateStr,
+                            time: startTimeStr
+                        };
+                        originalEndDate = {
+                            date: endDateStr,
+                            time: endTimeStr
+                        };
+
+                        let startLocalDate = parseDateAndTime(startDateStr, startTimeStr);
+                        let endLocalDate = parseDateAndTime(endDateStr, endTimeStr);
+
+                        if (startLocalDate && endLocalDate) {
+                            let locationStartDate = convertToLocationTimezone(startLocalDate, locationTimezoneName);
+                            let locationEndDate = convertToLocationTimezone(endLocalDate, locationTimezoneName);
+
+                            changeDateField("#closure_startDate", formatDate(locationStartDate));
+                            changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), formatTime(locationStartDate));
+                            changeDateField("#closure_endDate", formatDate(locationEndDate));
+                            changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), formatTime(locationEndDate));
+
+                            // Add indicator after date/time inputs
+                            $(".form-group.start-date-form-group .date-time-picker").after("<span class='wmech_timezone_adjusted_indicator' title='Timezone Adjusted to Closure Location'> (Timezone Adjusted)</span>");
+                            $(".form-group.end-date-form-group .date-time-picker").after("<span class='wmech_timezone_adjusted_indicator' title='Timezone Adjusted to Closure Location'> (Timezone Adjusted)</span>");
+
+
+                            log("Closure times adjusted to location timezone.");
+                        } else {
+                            error("Error parsing date and time strings.");
+                        }
+                    }
+                })
+                .catch(errorMsg => {
+                    error("Timezone Adjustment Error: " + errorMsg);
+                    locationTimezoneName = null; // Reset in case of error
+                });
+        } else {
+             if (originalStartDate && originalEndDate) { // Revert only if original times are stored
+                changeDateField("#closure_startDate", originalStartDate.date);
+                changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), originalStartDate.time);
+                changeDateField("#closure_endDate", originalEndDate.date);
+                changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), originalEndDate.time);
+
+                $(".wmech_timezone_adjusted_indicator").remove(); // remove indicator when reverting
+
+                originalStartDate = null; // Clear original times after reverting
+                originalEndDate = null;
+
+                log("Closure times reverted to local timezone.");
+            }
+            locationTimezoneName = null; // Reset if feature is disabled
         }
     }
+
+    function parseDateAndTime(dateStr, timeStr) {
+        let dateParts = dateStr.split(dateSeparator);
+        let timeParts = timeStr.split(':');
+        let year, month, day;
+
+        if (DateFormat === "mmddyyyy") {
+            month = parseInt(dateParts[0]) - 1; // Month is 0-indexed in Date
+            day = parseInt(dateParts[1]);
+            year = parseInt(dateParts[2]);
+        } else if (DateFormat === "ddmmyyyy") {
+            day = parseInt(dateParts[0]);
+            month = parseInt(dateParts[1]) - 1;
+            year = parseInt(dateParts[2]);
+        } else if (DateFormat === "yyyymmdd") {
+            year = parseInt(dateParts[0]);
+            month = parseInt(dateParts[1]) - 1;
+            day = parseInt(dateParts[2]);
+        } else { // Default to mmddyyyy if format is unknown
+            month = parseInt(dateParts[0]) - 1;
+            day = parseInt(dateParts[1]);
+            year = parseInt(dateParts[2]);
+        }
+
+        let hour = parseInt(timeParts[0]);
+        let minute = parseInt(timeParts[1]);
+
+        return new Date(year, month, day, hour, minute);
+    }
+
+
+    function convertToLocationTimezone(date, tzName) {
+        if (!tzName) return date; // Return original date if timezone name is not available
+        return new Date(date.toLocaleString('en-US', { timeZone: tzName }));
+    }
+
+    function formatDate(date) {
+        let day = formatTimeProp(date.getDate());
+        let month = formatTimeProp(date.getMonth() + 1); // Month is 0-indexed
+        let year = date.getFullYear();
+
+        if (DateFormat === "mmddyyyy") {
+            return month + dateSeparator + day + dateSeparator + year;
+        } else if (DateFormat === "ddmmyyyy") {
+            return day + dateSeparator + month + dateSeparator + year;
+        } else if (DateFormat === "yyyymmdd") {
+            return year + dateSeparator + month + dateSeparator + day;
+        } else { // Default to mmddyyyy if format is unknown
+            return month + dateSeparator + day + dateSeparator + year;
+        }
+    }
+
+    function formatTime(date) {
+        let hours = formatTimeProp(date.getHours());
+        let minutes = formatTimeProp(date.getMinutes());
+        return hours + ":" + minutes;
+    }		
 
     function addPanelWatcher() {
         $("li.closure-item, .add-closure-button").off();
@@ -898,6 +1104,37 @@ var G_AMOUNTOFPRESETS = 100;
             setTimeout(checkIfNeedToAddPanelWatcher, 5);
             setTimeout(removeClosureLines, 5);
             setTimeout(timeZoneCompare, 5);
+            setTimeout(adjustClosureTimesToLocationTimezone, 5); // Adjust times based on location timezone
+
+            // Add Timezone Adjustment Checkbox to Closure Panel
+            if ($("#wmech_timezone_adjust_container").length === 0) {
+                $(".form-group.end-date-form-group").after('<div id="wmech_timezone_adjust_container" class="form-group">' +
+                    '<div class="controls-container">' +
+                    '<input class="wmech_checkbox" id="wmech_settingtimezoneadjust_closure" type="checkbox">' +
+                    '<label class="wmechSettingsLabel" for="wmech_settingtimezoneadjust_closure">Adjust closure time to location timezone</label>' +
+                    '</div></div>');
+
+                $("#wmech_settingtimezoneadjust_closure").prop('checked', false); // Default to unchecked
+
+                // Load saved checkbox state, if any, after setting default to unchecked
+                if (settings.settingsCheckboxes && settings.settingsCheckboxes.timezoneadjust_closure) {
+                    $("#wmech_settingtimezoneadjust_closure").prop('checked', settings.settingsCheckboxes.timezoneadjust_closure);
+                     if ($("#wmech_settingtimezoneadjust_closure").is(":checked")) { // if loaded state is checked, then adjust time
+                        adjustClosureTimesToLocationTimezone();
+                    }
+                }
+
+
+                $("#wmech_settingtimezoneadjust_closure").change(function() {
+                    if (!settings.settingsCheckboxes) {
+                        settings.settingsCheckboxes = {};
+                    }
+                    settings.settingsCheckboxes.timezoneadjust_closure = $(this).is(":checked");
+                    saveSettings();
+                    adjustClosureTimesToLocationTimezone(); // Re-adjust times when checkbox is toggled
+                });
+            }
+
             setTimeout(function() {
                 $('.edit-closure > form > div.action-buttons > wz-button.cancel-button').click(function() {
                     $('.edit-closure > form > div.action-buttons > wz-button.cancel-button').off();
@@ -1495,7 +1732,8 @@ var G_AMOUNTOFPRESETS = 100;
             ".wmech_settingsinput { text-align: center; width: 100%; }",
             ".wmech-tab-pane { width: 100%; display: none; padding: 15px 0; }",
             ".wmech-tab-pane .active { width: 100%; display: block; padding: 15px 0; }",
-            ".wmech-alert { background-color: #00FFFF; border-radius: 5px; display: none; }"
+            ".wmech-alert { background-color: #00FFFF; border-radius: 5px; display: none; }",
+            ".wmech_timezone_adjusted_indicator { color: darkorange; font-weight: bold; }" // CSS for indicator			
         ].join('\n\n'));
     }
 
