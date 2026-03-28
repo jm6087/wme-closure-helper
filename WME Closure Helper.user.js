@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2025.02.14.01
+// @version      2026.03.28.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
@@ -23,6 +23,12 @@
 /* global xmlHttpRequest */
 
 var G_AMOUNTOFPRESETS = 100;
+const CLOSUREHELPER_VERSION = `v${GM_info.script.version}`;
+const SCRIPT_NAME = GM_info.script.name;
+const CH_UPDATE_NOTES = `<b>NEW:</b><br>
+- Converted to SDK<br><br>
+<b>FIXES:</b><br>
+- <br><br>`;
 
 (function() {
     'use strict';
@@ -34,10 +40,20 @@ var G_AMOUNTOFPRESETS = 100;
     var dateSeparator;
     let radio = "";
 
-    //Bootstrap
-    function bootstrap(tries = 1) {
-        if (typeof W === 'object' && W.userscripts?.state?.isReady && W.map &&
-            W.model && W.loginManager.user && WazeWrap.Ready) {
+    let sdk;
+
+unsafeWindow.SDK_INITIALIZED.then(() => {
+    if (!unsafeWindow.getWmeSdk) {
+        throw new Error("SDK is not installed");
+    }
+    sdk = unsafeWindow.getWmeSdk({ scriptId: "wme-closurehelper-sdk", scriptName: SCRIPT_NAME });
+    console.log(`SDK v ${sdk.getSDKVersion()} on ${sdk.getWMEVersion()} initialized`);
+    sdk.Events.once({ eventName: "wme-ready" }).then(bootstrap); //let wme and SDK get loaded, then continue with script
+});
+
+//    Bootstrap
+   function bootstrap(tries = 1) {
+        if (WazeWrap.Ready) {
             log("Here we go!!! Starting program!");
             init();
         } else if (tries < 1000) {
@@ -160,6 +176,7 @@ var G_AMOUNTOFPRESETS = 100;
 
         setTimeout(function() {
             WazeWrap.Interface.Tab('CH', $section.html(), initializeSettings, 'CH');
+            WazeWrap.Interface.ShowScriptUpdate(GM_info.script.name, GM_info.script.version, CH_UPDATE_NOTES, 'https://greasyfork.org/en/scripts/409911-wme-closure-helper');
             $(".wmech_presetdiv").hide();
             $("#wmech_presetrow1").show();
             $("#wmech_presetchooser").change(function() {
@@ -862,7 +879,8 @@ var G_AMOUNTOFPRESETS = 100;
     function timeZoneCompare() {
         if ($("#wmech_settingtimezonewarn").is(":checked")) {
             var apiVal = $("#wmech_settingtimezoneapi").val();
-            var center = W.map.getCenter();
+            var center = sdk.Map.getMapCenter();
+//            var center = W.map.getCenter();
             var actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
             var d = new Date();
             GM.xmlHttpRequest({
@@ -912,16 +930,22 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function numOfSegsSelected() {
-        return W.selectionManager.getSegmentSelection().segments.length;
+//        return W.selectionManager.getSegmentSelection().segments.length;
+        return sdk.Editing.getSelection().ids.length;
     }
 
     function getAllStreets() {
-        var res1 = W.selectionManager.getSegmentSelection();
+//        var res1 = W.selectionManager.getSegmentSelection();
+        var res1 = sdk.Editing.getSelection();
         var finalRes = [];
-        for (var i = 0; i < res1.segments.length; i++) {
-            var seg = res1.segments[i];
-            var pID = seg.attributes.primaryStreetID;
-            var pS = W.model.streets.getObjectById(pID);
+//        for (var i = 0; i < res1.segments.length; i++) {
+        for (var i = 0; i < res1.ids.length; i++) {
+//            var seg = res1.segments[i];
+            var seg = res1.ids[i];
+//            var pID = seg.attributes.primaryStreetID;
+            var pID = sdk.DataModel.Segments.getById({ segmentId: seg }).primaryStreetId
+//            var pS = W.model.streets.getObjectById(pID);
+            var pS = sdk.DataModel.Streets.getById({ streetId: pID });
             var name = pS.name;
             finalRes.push((name == null ? "No Name" : name));
         }
@@ -1108,7 +1132,8 @@ var G_AMOUNTOFPRESETS = 100;
     };
 
     function addDirectionCS() {
-        var DirLen = W.selectionManager.getSelectedWMEFeatures().length
+//        var DirLen = W.selectionManager.getSelectedWMEFeatures().length
+        var DirLen = sdk.Editing.getSelection().ids.length;
         var segDir;
         if (DirLen > 1) {
             segDir = 3
@@ -1214,9 +1239,12 @@ var G_AMOUNTOFPRESETS = 100;
         $("#wmech_lEB15m").click(function() { addToEndStartDate(0, 0, 15); });
         $("#wmech_lEB1h").click(function() { addToEndStartDate(0, 0, 60); });
         $("#wmech_lEB2h").click(function() { addToEndStartDate(0, 0, 120); });
-        $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
-        $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
-        $("#wmech_lEB1mo").click(function() { addToEndStartDate(1, 0, 0); });
+        $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 0, 1441); });
+//        $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
+        $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 0, 10081); });
+//        $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
+        $("#wmech_lEB1mo").click(function() { addToEndStartDate(0, 0, 43800); });
+//        $("#wmech_lEB1mo").click(function() { addToEndStartDate(1, 0, 0); });
         $("#wmech_lEBcustomMin").click(function() { addToEndStartDate(0, 0, customCSmin); });
     }
 
@@ -1299,7 +1327,9 @@ var G_AMOUNTOFPRESETS = 100;
             }}
         finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
 //        $("#closure_" + type + "Date").val(finalDate).change();
-        changeDateField("#closure_" + type + "Date", finalDate);
+//        changeDateField("#closure_" + type + "Date", finalDate);
+        changeDateField($("#closure_endDate"),finalDate);
+//        changeDateField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.date-picker-input"),finalDate);
 //        $("#closure_" + type + "Time").val(finalTime).change();
         changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"),finalTime);
     }
@@ -1500,7 +1530,8 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     async function clickClosure(elem, dbl = false) {
-        if (W.model.actionManager._undoStack.length > 0) {
+        if (sdk.Editing.getUnsavedChangesCount() > 0) {
+//        if (W.model.actionManager._undoStack.length > 0) {
             return WazeWrap.Alerts.error(GM_info.script.name, "Can't add closure because you have unsaved edits.");
         }
         $("wz-button.add-closure-button").click();
@@ -1598,6 +1629,7 @@ var G_AMOUNTOFPRESETS = 100;
         return false;
     }
 
+
     function closureName(reason) {
         var finalString = reason;
         var selectedType = getSelectedType(selectedType);
@@ -1605,9 +1637,14 @@ var G_AMOUNTOFPRESETS = 100;
         finalString = finalString.replace("{{type}}", selectedType);
 
         // Replace with segs
-        var selectedSegs = W.selectionManager.getSegmentSelection().segments;
-        var firstSelectedSegName = W.model.streets.getObjectById(selectedSegs[0].attributes.primaryStreetID).attributes.name;
-        var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).attributes.name;
+//        var selectedSegs = W.selectionManager.getSegmentSelection().segments;
+        var selectedSegs = sdk.Editing.getSelection();
+        //        var firstSelectedSegName = W.model.streets.getObjectById(selectedSegs[0].attributes.primaryStreetID).attributes.name;
+        var firstSelectedSegsID = sdk.DataModel.Segments.getById({ segmentId: selectedSegs.ids[0] }).primaryStreetId;
+        var firstSelectedSegName = sdk.DataModel.Streets.getById({ streetId: firstSelectedSegsID }).name;
+//        var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).attributes.name;
+        var lastSelectedSegsID = sdk.DataModel.Segments.getById({ segmentId: selectedSegs.ids[selectedSegs.ids.length-1] }).primaryStreetId;
+        var lastSelectedSegName = sdk.DataModel.Streets.getById({ streetId: lastSelectedSegsID }).name;
         if (firstSelectedSegName == null) {
             firstSelectedSegName = "";
         }
@@ -1625,50 +1662,52 @@ var G_AMOUNTOFPRESETS = 100;
     }
 
     function getSelectedType(option) {
-        var SelObj = W.selectionManager.getSelectedDataModelObjects();
-        var rawType = SelObj[0].attributes.roadType;
-        var newType;
-        switch (rawType) {
-            case 8: // Off-road / Not maintained"
-                newType = "Road";
-                break;
-            case 1: // Local Street"
-                newType = "Street";
-                break;
-            case 2: // Primary Street"
-                newType = "Primary Street";
-                break;
-            case 3: // Freeway (Interstate / Other)
-                newType = "Freeway";
-                break;
-            case 6: // Major Highway
-                newType = "Highway";
-                break;
-            case 7: //Minor Highway
-                newType = "Highway";
-                break;
-            case 4: // Ramp
-                newType = "Ramp";
-                break;
-            case 20: // PLR
-                newType = "Parking Lot";
-                break;
-            case 17: // PR
-                newType = "Private";
-                break;
-            case 15: // Ferry
-                newType = "Ferry";
-                break;
-            default: // Other road types
-                newType = "Roads";
-                break;
-        }
-               if (SelObj.length > 1) { // If multiple segments selected, check for different road types
-                   const multipleTypesSelected = SelObj.some(seg => seg.attributes.roadType !== SelObj[0].attributes.roadType);
-                   if (multipleTypesSelected == true) {newType = "Multiple Road Types"};
-               }
-        return newType;
+    // 1. Get the current selection (returns { ids, objectType } or null) [1]
+   var SelObj = sdk.Editing.getSelection();
+
+    // 2. Safety check: ensure segments are selected [1]
+    if (!SelObj || SelObj.objectType !== 'segment') {
+        return "No Segments Selected";
     }
+
+    var selectedIds = SelObj.ids;
+
+    // 3. Fetch the first segment facade to get the base road type [3]
+    var firstSeg = sdk.DataModel.Segments.getById({ segmentId: selectedIds[0] });
+    if (!firstSeg) return "Error";
+
+    const rawType = firstSeg.roadType; // Direct access, no .attributes [2, 4]
+    let newType;
+
+    // 4. Map the road type IDs to labels
+    switch (rawType) {
+        case 8: newType = "Road"; break;
+        case 1: newType = "Street"; break;
+        case 2: newType = "Primary Street"; break;
+        case 3: newType = "Freeway"; break;
+        case 6: newType = "Highway"; break;
+        case 7: newType = "Highway"; break;
+        case 4: newType = "Ramp"; break;
+        case 20: newType = "Parking Lot"; break;
+        case 17: newType = "Private"; break;
+        case 15: newType = "Ferry"; break;
+        default: newType = "Roads"; break;
+    }
+
+    // 5. If multiple segments are selected, check for differing road types
+    if (selectedIds.length > 1) {
+        const multipleTypesSelected = selectedIds.some(id => {
+            const seg = sdk.DataModel.Segments.getById({ segmentId: id });
+            return seg && seg.roadType !== rawType;
+        });
+
+        if (multipleTypesSelected) {
+            newType = "Multiple Road Types";
+        }
+    }
+
+    return newType;
+}
 
     function parseRule(rule) {
         //alert(rule);
@@ -1932,3 +1971,4 @@ var G_AMOUNTOFPRESETS = 100;
 
     bootstrap();
 })();
+
