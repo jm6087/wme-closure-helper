@@ -1,23 +1,24 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2026.03.28.01
+// @version      2026.05.01.01
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
 // @match        https://www.waze.com/*editor*
 // @exclude      https://www.waze.com/*user/*editor/*
-// @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // @connect      api.timezonedb.com
 // @grant        GM.xmlHttpRequest
+// @grant        unsafeWindow
 
+// @downloadURL https://update.greasyfork.org/scripts/409911/WME%20Closure%20Helper.user.js
+// @updateURL https://update.greasyfork.org/scripts/409911/WME%20Closure%20Helper.meta.js
 // ==/UserScript==
 
 /* global W */
 /* global toastr */
 /* global $ */
 /* global settings */
-/* global WazeWrap */
 /* global OpenLayers */
 /* global GM_xmlhttpRequest */
 /* global xmlHttpRequest */
@@ -30,7 +31,7 @@ const CH_UPDATE_NOTES = `<b>NEW:</b><br>
 <b>FIXES:</b><br>
 - <br><br>`;
 
-(function() {
+(function () {
     'use strict';
 
     var customCSmin;
@@ -40,25 +41,21 @@ const CH_UPDATE_NOTES = `<b>NEW:</b><br>
     var dateSeparator;
     let radio = "";
 
-    let sdk;
+    let sdkCH;
 
-unsafeWindow.SDK_INITIALIZED.then(() => {
-    if (!unsafeWindow.getWmeSdk) {
-        throw new Error("SDK is not installed");
-    }
-    sdk = unsafeWindow.getWmeSdk({ scriptId: "wme-closurehelper-sdk", scriptName: SCRIPT_NAME });
-    console.log(`SDK v ${sdk.getSDKVersion()} on ${sdk.getWMEVersion()} initialized`);
-    sdk.Events.once({ eventName: "wme-ready" }).then(bootstrap); //let wme and SDK get loaded, then continue with script
-});
-
-//    Bootstrap
-   function bootstrap(tries = 1) {
-        if (WazeWrap.Ready) {
-            log("Here we go!!! Starting program!");
-            init();
-        } else if (tries < 1000) {
-            setTimeout(function() { bootstrap(tries++); }, 200);
+    unsafeWindow.SDK_INITIALIZED.then(() => {
+        if (!unsafeWindow.getWmeSdk) {
+            throw new Error("SDK is not installed");
         }
+        sdkCH = unsafeWindow.getWmeSdk({ scriptId: "wme-closurehelper-sdk", scriptName: SCRIPT_NAME });
+        console.log(`SDK v ${sdkCH.getSDKVersion()} on ${sdkCH.getWMEVersion()} initialized`);
+        sdkCH.Events.once({ eventName: "wme-ready" }).then(bootstrap); //let wme and SDK get loaded, then continue with script
+    });
+
+    //    Bootstrap
+    function bootstrap() {
+        log("Here we go!!! Starting program!");
+        init();
     }
 
     function init() {
@@ -78,28 +75,28 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             DateFormat = "ddmmyyyy";
             dateSeparator = "/";
         }
-        if (lang_ddmmyyyy2.indexOf(Lang) != -1){
+        if (lang_ddmmyyyy2.indexOf(Lang) != -1) {
             DateFormat = "ddmmyyyy";
             dateSeparator = ".";
         }
-        if (lang_yyyymmdd.indexOf(Lang) != -1){
+        if (lang_yyyymmdd.indexOf(Lang) != -1) {
             DateFormat = "yyyymmdd";
             dateSeparator = "-";
         }
-        if (lang_ddmmyyyy3.indexOf(Lang) != -1){
+        if (lang_ddmmyyyy3.indexOf(Lang) != -1) {
             DateFormat = "ddmmyyyy"
             dateSeparator = "-";
         }
-        if (lang_yyyymmdd2.indexOf(Lang) != -1){
+        if (lang_yyyymmdd2.indexOf(Lang) != -1) {
             DateFormat = "yyyymmdd"
             dateSeparator = "/";
         }
-        if (lang_yyyymmdd3.indexOf(Lang) != -1){
+        if (lang_yyyymmdd3.indexOf(Lang) != -1) {
             DateFormat = "yyyymmdd"
             dateSeparator = ".";
             //        dateseparator2 = ".";
         }
-        if (DateFormat == ""){
+        if (DateFormat == "") {
             DateFormat = "mmddyyyy";
             dateSeparator = "/";
         }
@@ -174,12 +171,16 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             '<div class="wmech-alert" id="wmech-save-notice">Save Successful</div>';
         $section.html(tabString + "<div class='tab-content'>" + formString + settingsString + formatString + aboutString + "</div>");
 
-        setTimeout(function() {
-            WazeWrap.Interface.Tab('CH', $section.html(), initializeSettings, 'CH');
-            WazeWrap.Interface.ShowScriptUpdate(GM_info.script.name, GM_info.script.version, CH_UPDATE_NOTES, 'https://greasyfork.org/en/scripts/409911-wme-closure-helper');
+        setTimeout(function () {
+//            sdkCH.Sidebar.registerScriptTab({ tabLabel: 'CH', tabPane: $section.html() });
+            sdkCH.Sidebar.registerScriptTab().then( (r) => {
+                r.tabLabel.innerHTML = "Closure Helper";
+                r.tabPane.innerHTML = $section.html();
+            initializeSettings();
+            });
             $(".wmech_presetdiv").hide();
             $("#wmech_presetrow1").show();
-            $("#wmech_presetchooser").change(function() {
+            $("#wmech_presetchooser").change(function () {
                 var sel = parseInt($(this).children("option:selected").val()) + 1;
                 if (sel != -1) {
                     $(".wmech_presetdiv").hide();
@@ -198,7 +199,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         addSettingsHeader("Custom Minutes - Enter number of minutes (numbers only)");
         addSettingsInput("Custom time clicksaver - Enter number of minutes", "wmech_settingcustomcs");
         //         addSettingsCheckbox("Minutes", "wmech_settingcustomcsMin");
-        $("#wmech_settingtimezonewarn").change(function() {
+        $("#wmech_settingtimezonewarn").change(function () {
             if (!this.checked) {
                 $("#wmech_settingtimezoneapi").prop('disabled', true);
             } else {
@@ -225,7 +226,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         setUpDeletePresetButton();
         attachObserver();
 
-        $(".wmech_inputpreset").change(function() {
+        $(".wmech_inputpreset").change(function () {
             var id = $(this)[0].id;
             var harvestIdInfoRE = new RegExp(/wmech_preset([0-9]*)(.*)/);
             var harvestIdInfo = id.match(harvestIdInfoRE);
@@ -236,12 +237,12 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = this.value;
         });
-        $(".wmech_namepreset").on('input', function() {
+        $(".wmech_namepreset").on('input', function () {
             var curVal = $("#wmech_presetchooser").val();
             $("#wmech_presetchooser").children().eq(curVal).text("Preset " + (parseInt(curVal) + 1) + " - " + $(this).val());
             loadDropdown();
         });
-        $(".wmech_presetcheckbox").change(function() {
+        $(".wmech_presetcheckbox").change(function () {
             var id = $(this)[0].id;
             var harvestIdInfoRE = new RegExp(/wmech_preset([0-9]*)(.*)/);
             var harvestIdInfo = id.match(harvestIdInfoRE);
@@ -252,7 +253,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = this.checked;
         });
-        $(".wmech_presetcolor").on("change", function() {
+        $(".wmech_presetcolor").on("change", function () {
             var id = $(this)[0].id;
             var harvestIdInfoRE = new RegExp(/wmech_preset([0-9]*)(.*)/);
             var harvestIdInfo = id.match(harvestIdInfoRE);
@@ -263,7 +264,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = this.value;
         });
-        $(".wmech_presetdropdown").change(function() {
+        $(".wmech_presetdropdown").change(function () {
             var id = $(this)[0].id;
             var harvestIdInfoRE = new RegExp(/wmech_preset([0-9]*)(.*)/);
             var harvestIdInfo = id.match(harvestIdInfoRE);
@@ -274,7 +275,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             }
             settings.presets[parseInt(presetIndex - 1)][prop] = $(this).val();
         });
-        $(".wmech_settingscheckbox").change(function() {
+        $(".wmech_settingscheckbox").change(function () {
             var id = $(this)[0].id;
             var harvestIdInfoRE = new RegExp(/wmech_setting(.*)/);
             var harvestIdInfo = id.match(harvestIdInfoRE);
@@ -285,7 +286,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             settings.settingsCheckboxes[settingName] = $(this).is(":checked");
             saveSettings();
         });
-        $(".wmech_settingsinput").on('change paste keyup input', function() {
+        $(".wmech_settingsinput").on('change paste keyup input', function () {
             var id = $(this)[0].id;
             var harvestIdInfoRE = new RegExp(/wmech_setting(.*)/);
             var harvestIdInfo = id.match(harvestIdInfoRE);
@@ -310,18 +311,18 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     }
 
     function setUpSavePresetButton() {
-        $(".wmech_presetsavebutton").click(async function() {
+        $(".wmech_presetsavebutton").click(async function () {
             saveSettings();
             $('#wmech-save-notice').css("display", "block");
-            setTimeout(function() { $('#wmech-save-notice').css("display", "none"); }, 5000);
+            setTimeout(function () { $('#wmech-save-notice').css("display", "none"); }, 5000);
         });
     }
 
     function setUpDeletePresetButton() {
-        $(".wmech_presetdeletebutton").click(async function() {
+        $(".wmech_presetdeletebutton").click(async function () {
             // Find max preset value
             var maxValue = 0;
-            $("#wmech_presetchooser").find("option").each(function() {
+            $("#wmech_presetchooser").find("option").each(function () {
                 var curVal = $(this).val();
                 if (curVal > maxValue) {
                     maxValue = curVal;
@@ -356,27 +357,11 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         if (localStorage) {
             localStorage.setItem("wmech_Settings", JSON.stringify(settings));
         }
-// COMMENTED OUT BECAUASE OF WW ISSUES
-//        await saveToServer();
-// COMMENTED OUT BECAUASE OF WW ISSUES
         setTimeout(loadSettings, 100);
-    }
-
-    async function saveToServer() {
-        // log("Attempting to save to the WazeDev server.");
-        var res = await WazeWrap.Remote.SaveSettings(GM_info.script.name, settings);
-        if (res == false) {
-            error("Error saving settings to the WazeDev server.");
-        } else if (res == null) {
-            // log("Tried to save settings to WazeDev server, but you don't have a PIN set.")
-        } else {
-            // log("Saved settings to WazeDev server.");
-        }
     }
 
     async function loadSettings() {
         var loadedSettings = $.parseJSON(localStorage.getItem("wmech_Settings"));
-        var serverSettings = await WazeWrap.Remote.RetrieveSettings(GM_info.script.name);
         var defaultSettings = {
             enabled: true,
             presets: [{
@@ -391,12 +376,6 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
                 color: "#ffffff"
             }]
         };
-// COMMENTED OUT BECAUASE OF WW ISSUES
-//        if (serverSettings != null && serverSettings.hasOwnProperty("enabled")) {
-            // log("Using settings from WazeDev server.");
-//            settings = serverSettings;
-//        } else
-// COMMENTED OUT BECAUASE OF WW ISSUES
         if (loadedSettings != null && loadedSettings.hasOwnProperty("enabled")) {
             // log("Using settings from local settings.");
             settings = loadedSettings;
@@ -455,7 +434,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         $("#wmech_presetchooser").find('option').remove();
         var newPresetIndex = 0,
             visibleIndex = 0;
-        $(".wmech_namepreset").each(function(i, e) {
+        $(".wmech_namepreset").each(function (i, e) {
             var val = $(e).val();
             if (val.length > 0) {
                 $("#wmech_presetchooser").append($('<option>', {
@@ -481,14 +460,14 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         $("#wmech_presetchooser").val(visibleIndex);
     }
 
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
+    var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
             // Mutation is a NodeList and doesn't support forEach like an array
             for (var i = 0; i < mutation.addedNodes.length; i++) {
                 var addedNode = mutation.addedNodes[i];
 
                 // Only fire up if it's a node
-                if (addedNode.nodeType === Node.ELEMENT_NODE && addedNode.className=='segment-feature-editor') {
+                if (addedNode.nodeType === Node.ELEMENT_NODE && addedNode.className == 'segment-feature-editor') {
                     var closuresPanel = addedNode.querySelector('.closures');
                     if (closuresPanel) {
                         setup();
@@ -500,12 +479,12 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
 
     function attachObserver() {
         log("Observing...");
-        WazeWrap.Events.unregister("selectionchanged", null, attachObserver);
+        try { sdkCH.Events.off({ eventName: "wme-selection-changed", eventHandler: attachObserver }); } catch (e) {}
         if (document.querySelector("#edit-panel")) {
             observer.observe(document.querySelector("#edit-panel"), { childList: true, subtree: true });
             // setup();
         } else {
-            WazeWrap.Events.register("selectionchanged", null, attachObserver);
+            sdkCH.Events.on({ eventName: "wme-selection-changed", eventHandler: attachObserver });
         }
     }
 
@@ -514,9 +493,9 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         addPanelWatcher();
         addClosureCounter();
         formatClosureList();
-//         $(".toggleHistory").click(function() {
-//             setTimeout(addEnhancedClosureHistory, 1000);
-//         });
+        //         $(".toggleHistory").click(function() {
+        //             setTimeout(addEnhancedClosureHistory, 1000);
+        //         });
     }
 
     function addClosureCounter() {
@@ -526,7 +505,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         if ($("#wmech-counter").length == 0)
             $(".closures-tab").append("<div id='wmech-counter'></div>");
         $("#wmech-counter").text(msg);
-        setTimeout(function() {
+        setTimeout(function () {
             if ($(".closure-list").hasClass("active")) {
                 addClosureCounter();
             }
@@ -550,7 +529,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
                         id: ('wmechButton' + presetCount),
                         class: 'wmech_closurebutton',
                         style: ('background-color: ' + color + '; color:' + textColor)
-                    }).text(nameInput).attr("data-preset-val", presetCount - 1).on("click", function() {
+                    }).text(nameInput).attr("data-preset-val", presetCount - 1).on("click", function () {
                         clickClosure($(this), false);
                         radio = "no";
                     }));
@@ -582,18 +561,18 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
 
     function addClosureCheckboxes(reason = "addPanelWatcher()") {
         makeBulkButtons();
-        $("li.closure-item").each(function() {
+        $("li.closure-item").each(function () {
             var $checkboxDiv = $("<div />");
             var $checkbox = $("<input />", { type: "checkbox", "class": "wmech_bulkCheckbox" }).css("height", "100%").css("margin-top", "0");
             $checkboxDiv.css("vertical-align", "middle").css("position", "relative").css("margin-left", "4px");
             $checkboxDiv.append($checkbox);
-            if ($( this ).find(".wmech_bulkCheckbox").length == 0) {
-                $( this ).css("display", "flex").css("margin-bottom", "5px");
-                $( this ).wrapInner("<div style='margin-left: 4px; width: 90%;'></div>");
-                $( this ).prepend($checkboxDiv);
+            if ($(this).find(".wmech_bulkCheckbox").length == 0) {
+                $(this).css("display", "flex").css("margin-bottom", "5px");
+                $(this).wrapInner("<div style='margin-left: 4px; width: 90%;'></div>");
+                $(this).prepend($checkboxDiv);
             }
         });
-        $(":checkbox.wmech_bulkCheckbox").click(function(e) {
+        $(":checkbox.wmech_bulkCheckbox").click(function (e) {
             toggleBulkButtons();
             e.stopPropagation();
         });
@@ -605,7 +584,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         if ($(".closure-item").length > 1) {
             var holderDiv = $("<div />", { id: "wmech_selectAllDiv" }).css("margin-bottom", "4px");
             holderDiv.append(
-                $("<input />", { type: "checkbox", id: "wmech_selectAllCheckbox" }).click(function() {
+                $("<input />", { type: "checkbox", id: "wmech_selectAllCheckbox" }).click(function () {
                     $(".wmech_bulkCheckbox").prop("checked", this.checked);
                     toggleBulkButtons();
                 }));
@@ -639,12 +618,12 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         // $buttonDiv.append($propertiesButton);
         $(".closures-list").prepend($buttonDiv);
         $buttonDiv.hide();
-        $("#wmech_bulkX").click(function() {
+        $("#wmech_bulkX").click(function () {
             hideBulkButtons();
             $(".wmech_bulkCheckbox").prop("checked", false);
             $('#wmech_selectAllCheckbox').prop("checked", false);
         });
-        $("li.closure-item, .add-closure-button").click(function() {
+        $("li.closure-item, .add-closure-button").click(function () {
             $("#wmech_bulkButtonDiv").remove();
         });
         $("#wmech_bulkDeleteAll").click(deleteAllClosures);
@@ -664,19 +643,19 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         var title = $("#closure_reason").val();
         var dir = $("#closure_direction").val();
         var startDate = $("#closure_startDate").val();
-//        var startTime = $("#closure_startTime").val();
+        //        var startTime = $("#closure_startTime").val();
         var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
         var endDate = $("#closure_endDate").val();
-//        var endTime = $("#closure_endTime").val();
+        //        var endTime = $("#closure_endTime").val();
         var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
-        var waitForMTE = setInterval(function() {
+        var waitForMTE = setInterval(function () {
             // Every 100 seconds check for late info!
             if ($(".wmech_mtelabel").length > 0) {
                 clearInterval(waitForMTE);
                 var mte = $(".wmech_mtelabelselected").prev().data("mte-val");
                 var permanentChecked = $("#closure_permanent").attr("checked");
                 var nodes = []
-                $(".fromNodeClosed").each(function() {
+                $(".fromNodeClosed").each(function () {
                     if ($(this).attr("checked") == "checked") {
                         nodes.push(true);
                     } else {
@@ -687,13 +666,13 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
                 // Now, time to add a new closure!
                 $(".cancel-button").click();
                 $(".add-closure-button").click();
-                $("#closure_direction wz-option[value=" + dir +"]").click();
+                $("#closure_direction wz-option[value=" + dir + "]").click();
                 $("#closure_reason").val(title).change();
                 changeDateField("#closure_startDate", startDate);
-//                $("#closure_startDate").val(startDate).change();
-                changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"),startTime);
-//                $("#closure_startTime").val(startTime).change();
-                $(".fromNodeClosed").each(function(i, e) {
+                //                $("#closure_startDate").val(startDate).change();
+                changeTimeField($("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), startTime);
+                //                $("#closure_startTime").val(startTime).change();
+                $(".fromNodeClosed").each(function (i, e) {
                     if (nodes[i]) {
                         $(e).attr("checked", "checked");
                     }
@@ -704,18 +683,18 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
                 addToEndStartDate(0, 1, 0, "start");
                 if (mte == "") {
                     $("#closure_eventId").val("").change();
-                    setTimeout(function() {
+                    setTimeout(function () {
                         $("#closure_eventId").removeAttr("value");
                     }, 10);
                 } else {
                     $("#closure_eventId").val(mte).change();
                 }
-                setTimeout(function() {
+                setTimeout(function () {
                     // Wait for default end date/time adjustment
                     changeDateField("#closure_endDate", endDate);
-//                    $("#closure_endDate").val(endDate).change();
-                    changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"),endTime);
-//                    $("#closure_endTime").val(endTime).change();
+                    //                    $("#closure_endDate").val(endDate).change();
+                    changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), endTime);
+                    //                    $("#closure_endTime").val(endTime).change();
                     addToEndStartDate(0, 1, 0);
                     addPanelWatcher();
                 }, 100);
@@ -727,7 +706,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         if ($(".wmech_mtelabel").length > 0) {
             $("label:contains('" + name + "')").click();
         } else {
-            setTimeout(function() {
+            setTimeout(function () {
                 chooseMTE(name);
             }, 100);
         }
@@ -737,7 +716,8 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         log("Starting simple clone.");
         var checked = getIndexOfSelectedCheckboxes();
         if (checked.length != 1) {
-            return WazeWrap.Alerts.error(GM_info.script.name, "Currently, simple clone only allows you to clone one segment at a time.");
+            toastr.error("Currently, simple clone only allows you to clone one segment at a time.", GM_info.script.name);
+            return;
         }
         var si = checked[0];
         harvestCloneInfo(si);
@@ -748,7 +728,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         if ($("#closure_permanent").length > 1 && $(".fromNodeClosed").length > 1) {
             var permanentChecked = ($("#closure_permanent").attr("checked") == "checked");
             var nodes = [];
-            $(".fromNodeClosed").each(function() {
+            $(".fromNodeClosed").each(function () {
                 if ($(this).attr("checked") == "checked") {
                     nodes.push(true);
                 } else {
@@ -816,7 +796,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
 
     function getIndexOfSelectedCheckboxes() {
         var checked = [];
-        $(".wmech_bulkCheckbox").each(function(i) {
+        $(".wmech_bulkCheckbox").each(function (i) {
             if ($(this).is(":checked")) { checked.push(i); }
         });
         return checked;
@@ -824,7 +804,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
 
     function deleteAllClosures() {
         var checked = getIndexOfSelectedCheckboxes();
-        $("wz-menu-item.delete").on('click.wmech_bulk', function(e) {
+        $("wz-menu-item.delete").on('click.wmech_bulk', function (e) {
             e.stopImmediatePropagation();
         });
 
@@ -859,7 +839,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         var _confirm = window.confirm;
         var oldConfirm = window.confirm;
         var msg = "Delete Closure?";
-        window.confirm = function(msg) {
+        window.confirm = function (msg) {
             log(msg);
             if (msg.indexOf("Delete closure") != -1) {
                 return true;
@@ -867,7 +847,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
                 return oldConfirm(msg);
             }
         };
-        $("wz-menu-item.delete").each(function(i) {
+        $("wz-menu-item.delete").each(function (i) {
             if (checked.includes(i)) {
                 $(this).click();
             }
@@ -879,9 +859,8 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     function timeZoneCompare() {
         if ($("#wmech_settingtimezonewarn").is(":checked")) {
             var apiVal = $("#wmech_settingtimezoneapi").val();
-            var center = sdk.Map.getMapCenter();
-//            var center = W.map.getCenter();
-            var actualCenter = WazeWrap.Geometry.ConvertTo4326(center.lon, center.lat);
+            var center = sdkCH.Map.getMapCenter();
+            var actualCenter = new OpenLayers.LonLat(center.lon, center.lat).transform(new OpenLayers.Projection("EPSG:900913"), new OpenLayers.Projection("EPSG:4326"));
             var d = new Date();
             GM.xmlHttpRequest({
                 method: "GET",
@@ -893,9 +872,9 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
                     var timeZone = resp.response.abbreviation;
                     if (diff < 0) {
                         var msg = (-1 * diff) + " hour" + (diff != -1 ? "s" : "") + " behind.  Make sure to adjust your start time if you want the closure to go live now."
-                        } else {
-                            var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
-                            }
+                    } else {
+                        var msg = diff + " hour" + (diff != 1 ? "s" : "") + " ahead."
+                    }
                     if (diff != 0) {
                         $(".edit-closure > form > div:nth-child(4)").after("<div class='wmech_timezonewarnmessage'><span>Warning, the times for the closure you are adding is " + msg + "</span></div>");
                     }
@@ -906,7 +885,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
 
     function addPanelWatcher() {
         $("li.closure-item, .add-closure-button").off();
-        $("li.closure-item, .add-closure-button").click(function() {
+        $("li.closure-item, .add-closure-button").click(function () {
             setTimeout(addNodeClosureButtons, 5);
             setTimeout(addDirectionCS, 5);
             setTimeout(addClosureSegInfo, 5);
@@ -916,12 +895,12 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             setTimeout(checkIfNeedToAddPanelWatcher, 5);
             setTimeout(removeClosureLines, 5);
             setTimeout(timeZoneCompare, 5);
-            setTimeout(function() {
-                $('.edit-closure > form > div.action-buttons > wz-button.cancel-button').click(function() {
+            setTimeout(function () {
+                $('.edit-closure > form > div.action-buttons > wz-button.cancel-button').click(function () {
                     $('.edit-closure > form > div.action-buttons > wz-button.cancel-button').off();
                     $('.edit-closure [class^="wmech"]').remove();
                     $('.edit-closure [id^="wmech"]').remove();
-                    setTimeout(function() { setup(); }, 50);
+                    setTimeout(function () { setup(); }, 50);
                 })
             }, 20);
         });
@@ -930,22 +909,22 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     }
 
     function numOfSegsSelected() {
-//        return W.selectionManager.getSegmentSelection().segments.length;
-        return sdk.Editing.getSelection().ids.length;
+        //        return W.selectionManager.getSegmentSelection().segments.length;
+        return sdkCH.Editing.getSelection().ids.length;
     }
 
     function getAllStreets() {
-//        var res1 = W.selectionManager.getSegmentSelection();
-        var res1 = sdk.Editing.getSelection();
+        //        var res1 = W.selectionManager.getSegmentSelection();
+        var res1 = sdkCH.Editing.getSelection();
         var finalRes = [];
-//        for (var i = 0; i < res1.segments.length; i++) {
+        //        for (var i = 0; i < res1.segments.length; i++) {
         for (var i = 0; i < res1.ids.length; i++) {
-//            var seg = res1.segments[i];
+            //            var seg = res1.segments[i];
             var seg = res1.ids[i];
-//            var pID = seg.attributes.primaryStreetID;
-            var pID = sdk.DataModel.Segments.getById({ segmentId: seg }).primaryStreetId
-//            var pS = W.model.streets.getObjectById(pID);
-            var pS = sdk.DataModel.Streets.getById({ streetId: pID });
+            //            var pID = seg.attributes.primaryStreetID;
+            var pID = sdkCH.DataModel.Segments.getById({ segmentId: seg }).primaryStreetId
+            //            var pS = W.model.streets.getObjectById(pID);
+            var pS = sdkCH.DataModel.Streets.getById({ streetId: pID });
             var name = pS.name;
             finalRes.push((name == null ? "No Name" : name));
         }
@@ -985,13 +964,13 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         var numOfSegs = numOfSegsSelected();
         var segLabel = numOfSegs + " segs (" + segsLength + ")";
         $(".edit-closure form").prepend('<div class="form-group">' +
-                                        '<span><i class="fa fa-fw fa-chevron-down wmech_seglistchevron"></i></span>' +
-                                        '<label id="wmech_seginfolabel" class="control-label" for="closure_reason" style="margin-bottom: 0;">Segments</label>' +
-                                        '<label id="wmech_seginfolabel" class="control-label" style="font-weight: normal;">' + segLabel + '</label>' +
-                                        '<div class="controls"><ul id="wmech_seginfonames">' + '</ul></div></div>');
+            '<span><i class="fa fa-fw fa-chevron-down wmech_seglistchevron"></i></span>' +
+            '<label id="wmech_seginfolabel" class="control-label" for="closure_reason" style="margin-bottom: 0;">Segments</label>' +
+            '<label id="wmech_seginfolabel" class="control-label" style="font-weight: normal;">' + segLabel + '</label>' +
+            '<div class="controls"><ul id="wmech_seginfonames">' + '</ul></div></div>');
         $(".edit-closure form .form-group").first().click(collapseSegList);
         if ($("#wmech_settingseglistcollapse").prop("checked")) {
-//            radio = "checked"
+            //            radio = "checked"
             collapseSegList();
         }
         var streets = getAllStreets();
@@ -1011,52 +990,53 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
 
     function addClosureLengthValue() {
         $(".form-group.end-date-form-group").after('<div class="form-group">' +
-                                                   '<label class="control-label" for="closure_reason">Closure Length</label>' +
-                                                   '<div class="controls" style="text-align: center;">' +
-                                                   '<span id="wmech_closurelengthval"></span>' +
-                                                   '</div></div>');
+            '<label class="control-label" for="closure_reason">Closure Length</label>' +
+            '<div class="controls" style="text-align: center;">' +
+            '<span id="wmech_closurelengthval"></span>' +
+            '</div></div>');
         $("#wmech_closurelengthval").text(closureLength());
         $("#closure_startDate, " +
-          "#closure_endDate, " +
-          ".time-picker-input").on('change paste keyup input', function() {
-            setTimeout(updateClosureLength,50);
-        });
+            "#closure_endDate, " +
+            ".time-picker-input").on('change paste keyup input', function () {
+                setTimeout(updateClosureLength, 50);
+            });
     }
 
     function closureLength() {
         var startDate = $("#closure_startDate").val();
-//        var startTime = $("#closure_startTime").val();
+        //        var startTime = $("#closure_startTime").val();
         var startTime = $("#edit-panel div.closures div.form-group.start-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
         var endDate = $("#closure_endDate").val();
-//        var endTime = $("#closure_endTime").val();
+        //        var endTime = $("#closure_endTime").val();
         var endTime = $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val()
         //        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
         var regex = /(\d*)(\-|\.|\/)(\d*)(\-|\.|\/)(\d*)(.*)/;
         var startDateResult = regex.exec(startDate);
         var endDateResult = regex.exec(endDate);
-        if (DateFormat == "ddmmyyyy"){
+        if (DateFormat == "ddmmyyyy") {
             var startYear = startDateResult[5];
             var startMonth = startDateResult[3];
             var startDay = startDateResult[1];
             var endYear = endDateResult[5];
             var endMonth = endDateResult[3];
             var endDay = endDateResult[1];
-        }else{
-            if (DateFormat == "yyyymmdd"){
+        } else {
+            if (DateFormat == "yyyymmdd") {
                 var startYear = startDateResult[1];
                 var startMonth = startDateResult[3];
                 var startDay = startDateResult[5];
                 var endYear = endDateResult[1];
                 var endMonth = endDateResult[3];
                 var endDay = endDateResult[5];
-            }else{
+            } else {
                 var startYear = startDateResult[5];
                 var startMonth = startDateResult[1];
                 var startDay = startDateResult[3];
                 var endYear = endDateResult[5];
                 var endMonth = endDateResult[1];
                 var endDay = endDateResult[3];
-            }}
+            }
+        }
         var regex2 = /(.*):(.*)/;
         var startTimeResult = regex2.exec(startTime);
         var startHour = startTimeResult[1];
@@ -1123,7 +1103,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             second: 1
         };
 
-        Object.keys(s).forEach(function(key) {
+        Object.keys(s).forEach(function (key) {
             r[key] = Math.floor(d / s[key]);
             d -= r[key] * s[key];
         });
@@ -1132,20 +1112,20 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     };
 
     function addDirectionCS() {
-//        var DirLen = W.selectionManager.getSelectedWMEFeatures().length
-        var DirLen = sdk.Editing.getSelection().ids.length;
+        //        var DirLen = W.selectionManager.getSelectedWMEFeatures().length
+        var DirLen = sdkCH.Editing.getSelection().ids.length;
         var segDir;
         if (DirLen > 1) {
             segDir = 3
             $("#closure_direction wz-option[value='3']").click();
-        }else{
+        } else {
             segDir = $("#closure_direction").val();
         }
 
         var directionalCursors = $("#wmech_settingdircsdircur").is(":checked");
         $("#closure_direction").after("<div id='wmech_dBAB' class='wmech_closureButton wmech_dirbutton'>A → B</div>" +
-                                      "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
-                                      "<div id='wmech_dBTW' class='wmech_closureButton wmech_dirbutton'>Two way (⇆)</div>");
+            "<div id='wmech_dBBA' class='wmech_closureButton wmech_dirbutton'>B → A</div>" +
+            "<div id='wmech_dBTW' class='wmech_closureButton wmech_dirbutton'>Two way (⇆)</div>");
         var permDir = "";
         if ($(".heading").length > 0 && numOfSegsSelected() <= 1) {
             if ($(".letter-circle:eq(0)").text() == "A") {
@@ -1167,19 +1147,19 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
                 if (dir.length > 1) permDir = dir;
             }
         }
-        $("#wmech_dBAB").click(function() {
+        $("#wmech_dBAB").click(function () {
             $("#closure_direction wz-option[value='1']").click();
             $("#wmech_dBAB").css('background-color', '#26bae8');
             $("#wmech_dBBA").css('background-color', '#ddd');
             $("#wmech_dBTW").css('background-color', '#ddd');
         });
-        $("#wmech_dBBA").click(function() {
+        $("#wmech_dBBA").click(function () {
             $("#closure_direction wz-option[value='2']").click();
             $("#wmech_dBAB").css('background-color', '#ddd');
             $("#wmech_dBBA").css('background-color', '#26bae8');
             $("#wmech_dBTW").css('background-color', '#ddd');
         });
-        $("#wmech_dBTW").click(function() {
+        $("#wmech_dBTW").click(function () {
             $("#closure_direction wz-option[value='3']").click();
             $("#wmech_dBAB").css('background-color', '#ddd');
             $("#wmech_dBBA").css('background-color', '#ddd');
@@ -1223,8 +1203,8 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             '<span id="wmech_lEB15m" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #f5ffba;">+15m</span>',
             '<span id="wmech_lEB1h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+1h</span>',
             '<span id="wmech_lEB2h" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #c9ffba;">+2h</span>',
-            '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d</span>',
-            '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w</span>',
+            '<span id="wmech_lEB1d" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bafff7;">+1d1m</span>',
+            '<span id="wmech_lEB1w" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #bdbaff;">+1w1m</span>',
             '<span id="wmech_lEB1mo" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffbaf9;">+1mo</span>',
             '<span id="wmech_lEBcustomMin" class="wmech_closureButton wmech_lengthExtenderButton" style="background-color: #ffffff;">custom</span>',
         ].join("\n");
@@ -1235,17 +1215,17 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         } else {
             $("#wmech_lEBcustomMin").text(customCSmin + "m");
         }
-        $("#wmech_lEB1m").click(function() { addToEndStartDate(0, 0, 1); });
-        $("#wmech_lEB15m").click(function() { addToEndStartDate(0, 0, 15); });
-        $("#wmech_lEB1h").click(function() { addToEndStartDate(0, 0, 60); });
-        $("#wmech_lEB2h").click(function() { addToEndStartDate(0, 0, 120); });
-        $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 0, 1441); });
-//        $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
-        $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 0, 10081); });
-//        $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
-        $("#wmech_lEB1mo").click(function() { addToEndStartDate(0, 0, 43800); });
-//        $("#wmech_lEB1mo").click(function() { addToEndStartDate(1, 0, 0); });
-        $("#wmech_lEBcustomMin").click(function() { addToEndStartDate(0, 0, customCSmin); });
+        $("#wmech_lEB1m").click(function () { addToEndStartDate(0, 0, 1); });
+        $("#wmech_lEB15m").click(function () { addToEndStartDate(0, 0, 15); });
+        $("#wmech_lEB1h").click(function () { addToEndStartDate(0, 0, 60); });
+        $("#wmech_lEB2h").click(function () { addToEndStartDate(0, 0, 120); });
+        $("#wmech_lEB1d").click(function () { addToEndStartDate(0, 0, 1441); });
+        //        $("#wmech_lEB1d").click(function() { addToEndStartDate(0, 1, 0); });
+        $("#wmech_lEB1w").click(function () { addToEndStartDate(0, 0, 10081); });
+        //        $("#wmech_lEB1w").click(function() { addToEndStartDate(0, 7, 0); });
+        $("#wmech_lEB1mo").click(function () { addToEndStartDate(0, 0, 43800); });
+        //        $("#wmech_lEB1mo").click(function() { addToEndStartDate(1, 0, 0); });
+        $("#wmech_lEBcustomMin").click(function () { addToEndStartDate(0, 0, customCSmin); });
     }
 
     function addToEndStartDate(o, d, m, type = "end") {
@@ -1254,53 +1234,54 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         var finalTime;
         var endDate = $("#closure_" + type + "Date").val();
         var endTime = $("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").val();
-//        var endTime = $("#closure_" + type + "Time").val();
+        //        var endTime = $("#closure_" + type + "Time").val();
         //            var regex = /(.*)\/(.*)\/(.*)/;
         //        var regex = /(.*)(\-|\.|\/)(.*)(\-|\.|\/)(.*)/;
         var regex = /(\d*)(\-|\.|\/)(\d*)(\-|\.|\/)(\d*)(.*)/;
         var endDateResult = regex.exec(endDate);
-        if (DateFormat == "ddmmyyyy"){
+        if (DateFormat == "ddmmyyyy") {
             var endYear = endDateResult[5];
             var endMonth = endDateResult[3];
             var endDay = endDateResult[1];
-        }else{
-            if (DateFormat == "yyyymmdd"){
+        } else {
+            if (DateFormat == "yyyymmdd") {
                 var endYear = endDateResult[1];
                 var endMonth = endDateResult[3];
                 var endDay = endDateResult[5];
-            }else{
+            } else {
                 var endYear = endDateResult[5];
                 var endMonth = endDateResult[1];
                 var endDay = endDateResult[3];
-            }}
+            }
+        }
         // fix for last day of month and adding 1 month with clicksaver to ensure it is actually last day of following month.
         if (endYear == "2024" || endYear == "2028" || endYear == "2032" || endYear == "2036" || endYear == "2040" || endYear == "2044" || endYear == "2048") LY = "yes";
-        if (o == 1){
-            if (endMonth == "04" || endMonth == "06" || endMonth == "07" || endMonth == "09" || endMonth == "11" || endMonth == "12"){
-                if (endDay == "30"){
+        if (o == 1) {
+            if (endMonth == "04" || endMonth == "06" || endMonth == "07" || endMonth == "09" || endMonth == "11" || endMonth == "12") {
+                if (endDay == "30") {
                     o = 0;
                     d = 31;
                 }
-            }else{
-                if (endMonth == "03" || endMonth == "05" || endMonth == "08" || endMonth == "10"){
-                    if (endDay == "31"){
+            } else {
+                if (endMonth == "03" || endMonth == "05" || endMonth == "08" || endMonth == "10") {
+                    if (endDay == "31") {
                         o = 0;
                         d = 30;
                     }
-                }else{
-                    if (endMonth == "02" && endDay > "27"){
+                } else {
+                    if (endMonth == "02" && endDay > "27") {
                         o = 0;
-                        if (LY == "yes"){
+                        if (LY == "yes") {
                             d = 31;
-                        }else{
+                        } else {
                             d = 30;
                         }
-                    }else{
-                        if (endMonth == "01" && endDay > "27"){
+                    } else {
+                        if (endMonth == "01" && endDay > "27") {
                             o = 0;
-                            if (LY == "yes"){
+                            if (LY == "yes") {
                                 d = 31 - (endDay - 29);
-                            }else{
+                            } else {
                                 d = 31 - (endDay - 28);
                             }
                         }
@@ -1317,21 +1298,22 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         res.setTime(res.getTime() + (m * 60 * 1000));
         res.setDate(res.getDate() + d);
         res.setMonth(res.getMonth() + o);
-        if (DateFormat == "ddmmyyyy"){
+        if (DateFormat == "ddmmyyyy") {
             finalDate = formatTimeProp(formatTimeProp(res.getDate())) + dateSeparator + (parseInt(res.getMonth()) + 1) + dateSeparator + res.getFullYear();
-        }else{
-            if (DateFormat == "yyyymmdd"){
+        } else {
+            if (DateFormat == "yyyymmdd") {
                 finalDate = res.getFullYear() + dateSeparator + (parseInt(res.getMonth()) + 1) + dateSeparator + formatTimeProp(res.getDate());
-            }else{
+            } else {
                 finalDate = formatTimeProp(parseInt(res.getMonth()) + 1) + dateSeparator + formatTimeProp(res.getDate()) + dateSeparator + res.getFullYear();
-            }}
+            }
+        }
         finalTime = formatTimeProp(res.getHours()) + ":" + formatTimeProp(res.getMinutes());
-//        $("#closure_" + type + "Date").val(finalDate).change();
-//        changeDateField("#closure_" + type + "Date", finalDate);
-        changeDateField($("#closure_endDate"),finalDate);
-//        changeDateField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.date-picker-input"),finalDate);
-//        $("#closure_" + type + "Time").val(finalTime).change();
-        changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"),finalTime);
+        //        $("#closure_" + type + "Date").val(finalDate).change();
+        //        changeDateField("#closure_" + type + "Date", finalDate);
+        changeDateField($("#closure_endDate"), finalDate);
+        //        changeDateField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.date-picker-input"),finalDate);
+        //        $("#closure_" + type + "Time").val(finalTime).change();
+        changeTimeField($("#edit-panel div.closures div.form-group." + type + "-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), finalTime);
     }
 
     function changeDateField(element, newDate) {
@@ -1344,7 +1326,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     }
 
     function changeTimeField($element, newtime) {
-         $element.timepicker('setTime',newtime);
+        $element.timepicker('setTime', newtime);
     }
 
     function formatTimeProp(num) {
@@ -1353,9 +1335,9 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
 
     function addNodeClosureButtons() {
         $(".closure-nodes.form-group > wz-label").after("<span id='wmech_nCBNone' class='wmech_closureButton  wmech_nodeClosureButton'>None</span>" +
-                                                        "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
-                                                        "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
-                                                        "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
+            "<span id='wmech_nCBAll' class='wmech_closureButton wmech_nodeClosureButton'>All</span>" +
+            "<span id='wmech_nCBMiddle'class='wmech_closureButton wmech_nodeClosureButton'>Middle</span>" +
+            "<span id='wmech_nCBEnds'class='wmech_closureButton wmech_nodeClosureButton'>Ends</span>");
         $(".wmech_nodeClosureButton").unbind();
         $("#wmech_nCBNone").click(toggleNoNodes);
         $("#wmech_nCBAll").click(toggleAllNodes);
@@ -1400,11 +1382,11 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     }
 
     function panelToggleNodes(selector, setting, colorize = false) {
-        $(selector).each(function() {
+        $(selector).each(function () {
             this.checked = setting;
             $(this).change();
             if (colorize) {
-                setTimeout(function() {
+                setTimeout(function () {
                     colorizeRow(this);
                 }, 20);
             }
@@ -1415,7 +1397,7 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         var root = elem; //.shadow-root;
         $(root).find(".wz-slider").css("background-color", "rgb(63, 188, 113)");
         $(elem).parent().parent().css("background-color", "rgba(63, 188, 113, 0.4)");
-        $(elem).one("click", function() {
+        $(elem).one("click", function () {
             uncolorizeRow(elem);
         });
     }
@@ -1427,41 +1409,43 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     }
 
     function addMTERadios() {
-        if (radio != "no"){
-         $("#closure_eventId").parent().css("height", 0).css("overflow", "hidden");
-        $("#closure_eventId").removeAttr("required");
-        $(".label-with-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
-        var to = $("#closure_eventId").children().length - 1;
-        for (var i = 0; i < to; i++) {
-            var labelText = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").text();
-            var labelVal = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").val();
-            $("#wmech_mteradiosform").append('<div><input id="testButton' + i + '" type="radio" name="wmech_mte" data-mte-val="' + labelVal + '"><label for="testButton' + i + '" class="wmech_mtelabel">' + labelText + '</label></div>');
-        }
-        $('input[type=radio][name="wmech_mte"]').change(function() {
-            if (this.id == "testButton0") {
-                $("#closure_eventId").removeAttr("value");
-            } else {
-                $("#closure_eventId").val($(this).data("mte-val")).change();
+//        if (radio != "no"||radio != "") {
+        if (radio != "no") {
+            $("#closure_eventId").parent().css("height", 0).css("overflow", "hidden");
+            $("#closure_eventId").removeAttr("required");
+            $(".label-with-tooltip").after("<div id='wmech_mteradiosdiv'><form id='wmech_mteradiosform' name='wmech_mte'></form></div>");
+            var to = $("#closure_eventId").children().length - 1;
+            for (var i = 0; i < to; i++) {
+                var labelTest = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")");
+                var labelText = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").text();
+                var labelVal = $("#closure_eventId wz-option:nth-child(" + (i + 1) + ")").val();
+                $("#wmech_mteradiosform").append('<div><input id="testButton' + i + '" type="radio" name="wmech_mte" data-mte-val="' + labelVal + '"><label for="testButton' + i + '" class="wmech_mtelabel">' + labelText + '</label></div>');
             }
-            $(".wmech_mtelabel").removeClass("wmech_mtelabelselected");
-            $("label[for='" + this.id + "']").addClass("wmech_mtelabelselected");
-        });
-        var firstSelected = $("#closure_eventId").val();
-        if (firstSelected == "") {
-            $("#closure_eventId").val("").change();
-            setTimeout(function() {
-                $("#closure_eventId").removeAttr("value");
-            }, 100);
-            $("input[data-mte-val='']").click();
-        } else {
-            $("input[data-mte-val='" + firstSelected + "']").click();
-        }
+            $('input[type=radio][name="wmech_mte"]').change(function () {
+                if (this.id == "testButton0") {
+                    $("#closure_eventId").removeAttr("value");
+                } else {
+                    $("#closure_eventId").val($(this).data("mte-val")).change();
+                }
+                $(".wmech_mtelabel").removeClass("wmech_mtelabelselected");
+                $("label[for='" + this.id + "']").addClass("wmech_mtelabelselected");
+            });
+            var firstSelected = $("#closure_eventId").val();
+            if (firstSelected == "") {
+                $("#closure_eventId").val("").change();
+                setTimeout(function () {
+                    $("#closure_eventId").removeAttr("value");
+                }, 100);
+                $("input[data-mte-val='']").click();
+            } else {
+                $("input[data-mte-val='" + firstSelected + "']").click();
+            }
         }
         radio = ""
     }
 
     function checkIfNeedToAddPanelWatcher() {
-        setTimeout(function() {
+        setTimeout(function () {
             if ($("#closure_permanent").length == 0) {
                 addPanelWatcher();
             } else {
@@ -1530,9 +1514,9 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     }
 
     async function clickClosure(elem, dbl = false) {
-        if (sdk.Editing.getUnsavedChangesCount() > 0) {
-//        if (W.model.actionManager._undoStack.length > 0) {
-            return WazeWrap.Alerts.error(GM_info.script.name, "Can't add closure because you have unsaved edits.");
+        if (sdkCH.Editing.getUnsavedChangesCount() > 0) {
+            toastr.error("Can't add closure because you have unsaved edits.", GM_info.script.name);
+            return;
         }
         $("wz-button.add-closure-button").click();
         await new Promise(r => setTimeout(r, 100));
@@ -1542,42 +1526,42 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         if ($("#wmech_preset" + (ruleIndex + 1) + "timeString").val().length > 0) {
             var ruleParsed = parseRule($("#wmech_preset" + (ruleIndex + 1) + "timeString").val());
             changeDateField("#closure_endDate", ruleParsed[0]);
-//            $("#closure_endDate").val(ruleParsed[0]).change();
+            //            $("#closure_endDate").val(ruleParsed[0]).change();
             changeTimeField($("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input"), ruleParsed[1]);
-//            $("#closure_endTime").val(ruleParsed[1]).change();
+            //            $("#closure_endTime").val(ruleParsed[1]).change();
         }
         var permClosures = $(".wmech_presetcheckbox").eq(ruleIndex).prop("checked");
         if (permClosures) {
-            setTimeout(function() {
+            setTimeout(function () {
                 $("#closure_permanent").prop("checked", "checked").change();
             }, 50);
         }
         var nodeClosuresOption = $("#wmech_preset" + (ruleIndex + 1) + "nodes").val();
         if (nodeClosuresOption == "Middle") {
-            setTimeout(function() {
+            setTimeout(function () {
                 toggleMiddleNodes(true);
             }, 50);
         }
         if (nodeClosuresOption == "All") {
-            setTimeout(function() {
+            setTimeout(function () {
                 toggleAllNodes(true);
             }, 50);
         }
         if (nodeClosuresOption == "Ends") {
-            setTimeout(function() {
+            setTimeout(function () {
                 toggleEndsNodes(true);
             }, 50);
         }
         if (nodeClosuresOption == "None") {
-            setTimeout(function() {
+            setTimeout(function () {
                 toggleNoNodes(true);
             }, 50);
         }
-        setTimeout(function() {
+        setTimeout(function () {
             $("#closure_reason").css("background-color", "rgba(63, 188, 113, 0.5)");
             $("#closure_endDate").css("background-color", "rgba(63, 188, 113, 0.5)");
             $("#edit-panel div.closures div.form-group.end-date-form-group > div.date-time-picker > wz-text-input.time-picker-input").css("background-color", "rgba(63, 188, 113, 0.5)");
-//            $("#closure_endTime").css("background-color", "rgba(63, 188, 113, 0.5)");
+            //            $("#closure_endTime").css("background-color", "rgba(63, 188, 113, 0.5)");
             if (permClosures) {
                 $(".edit-closure > form > div > #closure_permanent").css("color", "rgba(63, 188, 113, 1)");
             }
@@ -1608,14 +1592,14 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             if (mteFuncResult != false) {
                 $("#closure_eventId").val(mteFuncResult.val.toString());
             }
-        }else{
+        } else {
             document.querySelector("#closure_eventId > wz-option:nth-child(1)").shadowRoot.querySelector("div").click();
         }
     }
 
     function matchMTE(match) {
         var mtes = [];
-        $("#closure_eventId").children().each(function() {
+        $("#closure_eventId").children().each(function () {
             var text = $(this).text();
             var val = $(this).val();
             mtes.push({ 'name': text, 'val': val });
@@ -1637,14 +1621,14 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
         finalString = finalString.replace("{{type}}", selectedType);
 
         // Replace with segs
-//        var selectedSegs = W.selectionManager.getSegmentSelection().segments;
-        var selectedSegs = sdk.Editing.getSelection();
+        //        var selectedSegs = W.selectionManager.getSegmentSelection().segments;
+        var selectedSegs = sdkCH.Editing.getSelection();
         //        var firstSelectedSegName = W.model.streets.getObjectById(selectedSegs[0].attributes.primaryStreetID).attributes.name;
-        var firstSelectedSegsID = sdk.DataModel.Segments.getById({ segmentId: selectedSegs.ids[0] }).primaryStreetId;
-        var firstSelectedSegName = sdk.DataModel.Streets.getById({ streetId: firstSelectedSegsID }).name;
-//        var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).attributes.name;
-        var lastSelectedSegsID = sdk.DataModel.Segments.getById({ segmentId: selectedSegs.ids[selectedSegs.ids.length-1] }).primaryStreetId;
-        var lastSelectedSegName = sdk.DataModel.Streets.getById({ streetId: lastSelectedSegsID }).name;
+        var firstSelectedSegsID = sdkCH.DataModel.Segments.getById({ segmentId: selectedSegs.ids[0] }).primaryStreetId;
+        var firstSelectedSegName = sdkCH.DataModel.Streets.getById({ streetId: firstSelectedSegsID }).name;
+        //        var lastSelectedSegName = W.model.streets.getObjectById(selectedSegs[selectedSegs.length - 1].attributes.primaryStreetID).attributes.name;
+        var lastSelectedSegsID = sdkCH.DataModel.Segments.getById({ segmentId: selectedSegs.ids[selectedSegs.ids.length - 1] }).primaryStreetId;
+        var lastSelectedSegName = sdkCH.DataModel.Streets.getById({ streetId: lastSelectedSegsID }).name;
         if (firstSelectedSegName == null) {
             firstSelectedSegName = "";
         }
@@ -1662,52 +1646,52 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     }
 
     function getSelectedType(option) {
-    // 1. Get the current selection (returns { ids, objectType } or null) [1]
-   var SelObj = sdk.Editing.getSelection();
+        // 1. Get the current selection (returns { ids, objectType } or null) [1]
+        var SelObj = sdkCH.Editing.getSelection();
 
-    // 2. Safety check: ensure segments are selected [1]
-    if (!SelObj || SelObj.objectType !== 'segment') {
-        return "No Segments Selected";
-    }
-
-    var selectedIds = SelObj.ids;
-
-    // 3. Fetch the first segment facade to get the base road type [3]
-    var firstSeg = sdk.DataModel.Segments.getById({ segmentId: selectedIds[0] });
-    if (!firstSeg) return "Error";
-
-    const rawType = firstSeg.roadType; // Direct access, no .attributes [2, 4]
-    let newType;
-
-    // 4. Map the road type IDs to labels
-    switch (rawType) {
-        case 8: newType = "Road"; break;
-        case 1: newType = "Street"; break;
-        case 2: newType = "Primary Street"; break;
-        case 3: newType = "Freeway"; break;
-        case 6: newType = "Highway"; break;
-        case 7: newType = "Highway"; break;
-        case 4: newType = "Ramp"; break;
-        case 20: newType = "Parking Lot"; break;
-        case 17: newType = "Private"; break;
-        case 15: newType = "Ferry"; break;
-        default: newType = "Roads"; break;
-    }
-
-    // 5. If multiple segments are selected, check for differing road types
-    if (selectedIds.length > 1) {
-        const multipleTypesSelected = selectedIds.some(id => {
-            const seg = sdk.DataModel.Segments.getById({ segmentId: id });
-            return seg && seg.roadType !== rawType;
-        });
-
-        if (multipleTypesSelected) {
-            newType = "Multiple Road Types";
+        // 2. Safety check: ensure segments are selected [1]
+        if (!SelObj || SelObj.objectType !== 'segment') {
+            return "No Segments Selected";
         }
-    }
 
-    return newType;
-}
+        var selectedIds = SelObj.ids;
+
+        // 3. Fetch the first segment facade to get the base road type [3]
+        var firstSeg = sdkCH.DataModel.Segments.getById({ segmentId: selectedIds[0] });
+        if (!firstSeg) return "Error";
+
+        const rawType = firstSeg.roadType; // Direct access, no .attributes [2, 4]
+        let newType;
+
+        // 4. Map the road type IDs to labels
+        switch (rawType) {
+            case 8: newType = "Road"; break;
+            case 1: newType = "Street"; break;
+            case 2: newType = "Primary Street"; break;
+            case 3: newType = "Freeway"; break;
+            case 6: newType = "Highway"; break;
+            case 7: newType = "Highway"; break;
+            case 4: newType = "Ramp"; break;
+            case 20: newType = "Parking Lot"; break;
+            case 17: newType = "Private"; break;
+            case 15: newType = "Ferry"; break;
+            default: newType = "Roads"; break;
+        }
+
+        // 5. If multiple segments are selected, check for differing road types
+        if (selectedIds.length > 1) {
+            const multipleTypesSelected = selectedIds.some(id => {
+                const seg = sdkCH.DataModel.Segments.getById({ segmentId: id });
+                return seg && seg.roadType !== rawType;
+            });
+
+            if (multipleTypesSelected) {
+                newType = "Multiple Road Types";
+            }
+        }
+
+        return newType;
+    }
 
     function parseRule(rule) {
         //alert(rule);
@@ -1726,36 +1710,36 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
             var ruleHr = parseInt(timeString.substring(0, 2));
             var ruleMin = parseInt(timeString.substring(3, 5));
             // fix for last day of month and adding 1 month with clicksaver to ensure it is actually last day of following month.
-        if (yr == "2024" || yr == "2028" || yr == "2032" || yr == "2036" || yr == "2040" || yr == "2044" || yr == "2048") LY = "yes";
-            if (mon == "04" || mon == "06" || mon == "07" || mon == "09" || mon == "11" || mon == "12"){
-                if (day == "30"){
+            if (yr == "2024" || yr == "2028" || yr == "2032" || yr == "2036" || yr == "2040" || yr == "2044" || yr == "2048") LY = "yes";
+            if (mon == "04" || mon == "06" || mon == "07" || mon == "09" || mon == "11" || mon == "12") {
+                if (day == "30") {
                     newMon = mon + 1;
                     newDay = 1;
-                }else{
+                } else {
                     newMon = mon;
                     newDay = day + 1;
                 }
-            }else{
-                if (mon == "03" || mon == "05" || mon == "08" || mon == "10"){
-                    if (day == "31"){
+            } else {
+                if (mon == "03" || mon == "05" || mon == "08" || mon == "10") {
+                    if (day == "31") {
                         newMon = mon + 1;
                         newDay = 1;
-                    }else{
-                    newMon = mon;
-                    newDay = day + 1;
-                }
-                }else{
-                    if (mon == "02" && day > "27" && LY == "no" || mon == "02" && day > "28" && LY == "yes"){
-//                        if (LY == "yes" && day > "28"){
-                            newMon = mon + 1;
-                            newDay = 1;
-                        }else{
-                            newMon = mon;
-                            newDay = day;
-                        }
+                    } else {
+                        newMon = mon;
+                        newDay = day + 1;
+                    }
+                } else {
+                    if (mon == "02" && day > "27" && LY == "no" || mon == "02" && day > "28" && LY == "yes") {
+                        //                        if (LY == "yes" && day > "28"){
+                        newMon = mon + 1;
+                        newDay = 1;
+                    } else {
+                        newMon = mon;
+                        newDay = day;
                     }
                 }
-//       }
+            }
+            //       }
             if (count == 0) {
                 // (ex. "U: 05:00", "U: 23:15")
                 if (ruleHr > hr || (ruleHr == hr && ruleMin > min)) { return [assembleYear([yr, mon, day]), assembleTime([ruleHr, ruleMin])]; }
@@ -1920,15 +1904,18 @@ unsafeWindow.SDK_INITIALIZED.then(() => {
     function assembleYear(parts) {
         // parts[0] is yr, parts[1] is mon, parts[2] is day
         //        Lang = I18n.currentLocale()
-        if (DateFormat == "mmddyyyy"){
+        if (DateFormat == "mmddyyyy") {
             return addZero(parts[1]) + dateSeparator + addZero(parts[2]) + dateSeparator + parts[0];
-        }else{
-            if (DateFormat == "yyyymmdd"){
+        } else {
+            if (DateFormat == "yyyymmdd") {
                 return parts[0] + dateSeparator + addZero(parts[1]) + dateSeparator + addZero(parts[2]);
-            }else{
-                if (DateFormat == "ddmmyyyy"){
+            } else {
+                if (DateFormat == "ddmmyyyy") {
                     return addZero(parts[2]) + dateSeparator + addZero(parts[1]) + dateSeparator + parts[0];
-                }}}}
+                }
+            }
+        }
+    }
 
     function assembleTime(parts) {
         // parts[0] is hr, parts[1] is min
