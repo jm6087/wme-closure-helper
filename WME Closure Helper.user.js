@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         WME Closure Helper
 // @namespace    https://greasyfork.org/en/users/673666-fourloop
-// @version      2026.05.01.01
+// @version      2026.05.01.02
 // @description  A script to help out with WME closure efforts! :D
 // @author       fourLoop & maintained by jm6087 and fuji2086
 // @match        https://beta.waze.com/*editor*
 // @match        https://www.waze.com/*editor*
 // @exclude      https://www.waze.com/*user/*editor/*
+// @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
 // @connect      api.timezonedb.com
 // @grant        GM.xmlHttpRequest
 // @grant        unsafeWindow
@@ -20,6 +21,7 @@
 /* global $ */
 /* global settings */
 /* global OpenLayers */
+/* global WazeWrap */
 /* global GM_xmlhttpRequest */
 /* global xmlHttpRequest */
 
@@ -178,6 +180,7 @@ const CH_UPDATE_NOTES = `<b>NEW:</b><br>
                 r.tabPane.innerHTML = $section.html();
             initializeSettings();
             });
+            WazeWrap.Interface.ShowScriptUpdate(GM_info.script.name, GM_info.script.version, CH_UPDATE_NOTES, 'https://greasyfork.org/en/scripts/409911-wme-closure-helper');
             $(".wmech_presetdiv").hide();
             $("#wmech_presetrow1").show();
             $("#wmech_presetchooser").change(function () {
